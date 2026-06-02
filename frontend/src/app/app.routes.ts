@@ -13,21 +13,23 @@ import { PanelAjustes } from './features/ajustes/panel-ajustes/panel-ajustes';
 import { GestionarDetalleRuta } from './features/admin/gestionar-rutas/components/gestionar-detalle-ruta/gestionar-detalle-ruta';
 import { GestionarHorarios } from './features/admin/gestionar-rutas/components/gestionar-horarios/gestionar-horarios';
 import { GestionarTiempos } from './features/admin/gestionar-rutas/components/gestionar-tiempos/gestionar-tiempos';
+import { adminGuard } from './features/auth/guards/admin.guard';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
     { path: 'auth/login', component: LoginComponent },
     { path: 'auth/registro', component: RegistroComponent },
     { path: 'auth/perfil', component: PerfilComponent },
-    { path: 'admin/dashboard', component: AdminDashboard },
-    { path: 'admin/estadisticas', component: Estadisticas },
-    { path: 'admin/barrios', component: GestionarBarrios },
-    { path: 'admin/empresas', component: GestionarEmpresas },
-    { path: 'admin/rutas', component: GestionarRutas },
-    { path: 'admin/rutas/detalle', component: GestionarDetalleRuta },
-    { path: 'admin/rutas/horarios', component: GestionarHorarios },
-    { path: 'admin/rutas/tiempos', component: GestionarTiempos },
-    { path: 'admin/usuarios', component: GestionarUsuarios },
+    { path: 'admin-dashboard', redirectTo: 'admin/dashboard', pathMatch: 'full' },
+    { path: 'admin/dashboard', component: AdminDashboard, canActivate: [adminGuard] },
+    { path: 'admin/estadisticas', component: Estadisticas, canActivate: [adminGuard] },
+    { path: 'admin/barrios', component: GestionarBarrios, canActivate: [adminGuard] },
+    { path: 'admin/empresas', component: GestionarEmpresas, canActivate: [adminGuard] },
+    { path: 'admin/rutas', component: GestionarRutas, canActivate: [adminGuard] },
+    { path: 'admin/rutas/detalle', component: GestionarDetalleRuta, canActivate: [adminGuard] },
+    { path: 'admin/rutas/horarios', component: GestionarHorarios, canActivate: [adminGuard] },
+    { path: 'admin/rutas/tiempos', component: GestionarTiempos, canActivate: [adminGuard] },
+    { path: 'admin/usuarios', component: GestionarUsuarios, canActivate: [adminGuard] },
     { path: 'usuario/dashboard', redirectTo: 'usuario/buscar-rutas', pathMatch: 'full' },
     { path: 'usuario/buscar-rutas', component: BuscarRutas },
     { path: 'usuario/ajustes', component: PanelAjustes },

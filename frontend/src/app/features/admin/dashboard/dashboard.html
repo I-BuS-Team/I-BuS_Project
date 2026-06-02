@@ -109,12 +109,12 @@
 
     <!-- Cerrar Sesión Button -->
     <div class="flex flex-col items-center mt-12 gap-4">
-      <a routerLink="/auth/login" class="px-6 py-2.5 rounded-xl font-inter font-bold text-[15px] bg-ibus-red text-ibus-dark-red flex items-center gap-2 hover:bg-opacity-90 active:scale-95 transition-all shadow-md">
+      <button (click)="onCerrarSesion()" class="px-6 py-2.5 rounded-xl font-inter font-bold text-[15px] bg-ibus-red text-ibus-dark-red flex items-center gap-2 hover:bg-opacity-90 active:scale-95 transition-all shadow-md">
         <svg class="w-5 h-5 text-ibus-dark-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
         <span>Cerrar Sesión</span>
-      </a>
+      </button>
     </div>
 
   </div>
