@@ -226,4 +226,19 @@ export class AuthService {
       catchError(() => of({ success: true, message: 'Cuenta eliminada (Modo Local).' }))
     );
   }
+
+  async getSessionToken(): Promise<string | null> {
+    if (this.modoOffline) {
+      return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZW1haWwiOiJhZG1pbkBpYnVzLmNvbSIsInVzZXJfbWV0YWRhdGEiOnsiaWRUaXBvVXN1YXJpbyI6MX19.c2lnbmF0dXJl';
+    }
+    try {
+      const { data, error } = await this.supabase.auth.getSession();
+      if (error || !data.session) {
+        return null;
+      }
+      return data.session.access_token;
+    } catch {
+      return null;
+    }
+  }
 }
