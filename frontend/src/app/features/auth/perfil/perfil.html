@@ -42,10 +42,15 @@
                 </svg>
             </div>
 
-            <!-- Username -->
-            <h1 class="font-inter font-bold text-[22px] text-white text-center mt-3 mb-6 md:text-[26px]">
-                Usuario Pérez
-            </h1>
+            <!-- Username & Email -->
+            <div class="flex flex-col items-center mt-3 mb-6">
+                <h1 class="font-inter font-bold text-[22px] text-white text-center md:text-[26px] truncate max-w-[320px]">
+                    {{ nombreUsuario }}
+                </h1>
+                <span class="font-inter text-[13px] text-white/60 mt-0.5 select-all">
+                    {{ emailUsuario }}
+                </span>
+            </div>
 
             <!-- Content List -->
             <div class="w-full">
@@ -152,6 +157,51 @@
             <button (click)="onEliminarCuenta()"
                 class="font-inter text-[13px] text-white/50 hover:text-ibus-red hover:underline transition-colors mt-2">
                 Eliminar Cuenta
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirmación de Eliminación Custom Modal -->
+    <div *ngIf="mostrarModalConfirmacion" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div class="bg-ibus-blue border border-white/20 rounded-2xl p-6 max-w-[360px] w-full shadow-2xl flex flex-col items-center animate-fade-in font-inter">
+            <div class="w-12 h-12 bg-red-950/40 border border-red-500/30 text-[#FFB9B9] rounded-full flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-white font-bold text-center text-lg mb-2">¿Eliminar Cuenta?</h3>
+            <p class="text-white/70 text-center text-sm mb-6 leading-relaxed">
+                ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.
+            </p>
+            <div class="flex gap-3 w-full">
+                <button (click)="cancelarEliminarCuenta()"
+                    class="flex-1 py-2.5 rounded-xl border border-white/20 text-white font-bold text-sm hover:bg-white/5 transition-all">
+                    Cancelar
+                </button>
+                <button (click)="confirmarEliminarCuenta()"
+                    class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-md active:scale-95">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerta de Solicitud de Eliminación Custom Modal -->
+    <div *ngIf="mostrarModalAlerta" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+        <div class="bg-ibus-blue border border-white/20 rounded-2xl p-6 max-w-[360px] w-full shadow-2xl flex flex-col items-center animate-fade-in font-inter">
+            <div class="w-12 h-12 bg-emerald-950/40 border border-emerald-500/30 text-[#A7F3D0] rounded-full flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h3 class="text-white font-bold text-center text-lg mb-2">Solicitud Recibida</h3>
+            <p class="text-white/70 text-center text-sm mb-6 leading-relaxed">
+                {{ mensajeAlerta }}
+            </p>
+            <button (click)="cerrarModalAlerta()"
+                class="w-full py-2.5 rounded-xl bg-ibus-yellow text-ibus-blue font-bold text-sm hover:bg-opacity-90 transition-all shadow-md active:scale-95">
+                Entendido
             </button>
         </div>
     </div>
