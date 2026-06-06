@@ -18,7 +18,7 @@ class Usuario(BaseModel):
         from_attributes = True
 
 class Empresa(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombreEmpresa: str
     anioFundacion: int
     direccion: str
@@ -30,18 +30,19 @@ class Empresa(BaseModel):
         from_attributes = True
     
 class Barrio(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombre: str
     
     class Config:
         from_attributes = True
 
 class Ruta(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     idEmpresa: int
     inicioRuta_id: int
     destinoRuta_id: int
     frecuencia: str
+    barrio_ids: Optional[List[int]] = []
     
     class Config:
         from_attributes = True
@@ -90,3 +91,19 @@ class TramoRuta(BaseModel):
 class RutaCalcularResponse(BaseModel):
     total_tramos: int
     camino: List[TramoRuta]
+
+class ElementoUsoDia(BaseModel):
+    dia: str
+    valor: int
+
+class ElementoCobertura(BaseModel):
+    nombre: str
+    porcentaje: int
+
+class EstadisticasResponse(BaseModel):
+    totalRutas: int
+    totalBarrios: int
+    totalEmpresas: int
+    usuariosActivos: int
+    usoPorDia: List[ElementoUsoDia]
+    coberturaRutas: List[ElementoCobertura]
