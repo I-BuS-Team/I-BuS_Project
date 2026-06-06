@@ -58,6 +58,18 @@ export class AdminRutasService {
     return this.http.get<Barrio[]>(`${this.apiUrl}/barrios`);
   }
 
+  crearBarrio(barrio: Barrio): Observable<Barrio> {
+    return this.http.post<Barrio>(`${this.apiUrl}/barrios`, barrio);
+  }
+
+  actualizarBarrio(id: number, barrio: Barrio): Observable<Barrio> {
+    return this.http.put<Barrio>(`${this.apiUrl}/barrios/${id}`, barrio);
+  }
+
+  eliminarBarrio(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/barrios/${id}`);
+  }
+
   getEmpresas(): Observable<Empresa[]> {
     return this.http.get<Empresa[]>(`${this.apiUrl}/empresas`);
   }

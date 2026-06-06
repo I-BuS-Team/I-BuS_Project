@@ -7,7 +7,7 @@ from app.domain.models import (
     Barrio as DomainBarrio, Empresa as DomainEmpresa, Ruta as DomainRuta, 
     Horario as DomainHorario, Tiempo as DomainTiempo, DetalleRuta as DomainDetalleRuta
 )
-from app.infrastructure.models import RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB
+from app.infrastructure.models import BarrioDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB
 
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
@@ -248,5 +248,48 @@ def eliminar_detalle_ruta(db: Session, id_detalle: int) -> bool:
     if not detalle_db:
         return False
     db.delete(detalle_db)
+    db.commit()
+    return True
+
+# --- CASOS DE USO DE BARRIOS ---
+def crear_barrio(db: Session, barrio_in: DomainBarrio):
+    repo = BarrioRepository(db)
+    nuevo_barrio = BarrioDB(
+        nombreBarrio=barrio_in.nombre
+    )
+    creado = repo.create(nuevo_barrio)
+    return DomainBarrio(id=creado.idBarrio, nombre=creado.nombreBarrio)
+
+def actualizar_barrio(db: Session, id_barrio: int, barrio_update: DomainBarrio):
+    repo = BarrioRepository(db)
+    barrio_db = repo.get_by_id(id_barrio)
+    if not barrio_db:
+        return None
+    barrio_db.nombreBarrio = barrio_update.nombre
+    actualizado = repo.update(barrio_db)
+    return DomainBarrio(id=actualizado.idBarrio, nombre=actualizado.nombreBarrio)
+
+def eliminar_barrio(db: Session, id_barrio: int) -> bool:
+    repo = BarrioRepository(db)
+    barrio_db = repo.get_by_id(id_barrio)
+    if not barrio_db:
+        return False
+        
+    # Verificar si el barrio está en uso como inicio o destino de alguna ruta
+    rutas_con_barrio = db.query(RutaDB).filter(
+        (RutaDB.inicioRuta_id == id_barrio) | (RutaDB.destinoRuta_id == id_barrio)
+    ).first()
+    
+    if rutas_con_barrio:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar el barrio porque está asignado como origen o destino de una ruta activa."
+        )
+        
+    # Eliminar relaciones en RutaBarrio (puntos intermedios)
+    db.query(RutaBarrioDB).filter(RutaBarrioDB.idBarrio == id_barrio).delete()
+    
+    db.delete(barrio_db)
     db.commit()
     return True

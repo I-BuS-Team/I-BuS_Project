@@ -29,6 +29,20 @@ class BarrioRepository:
     def get_all(self):
         return self.db.query(BarrioDB).order_by(BarrioDB.nombreBarrio.asc()).all()
 
+    def get_by_id(self, id_barrio: int):
+        return self.db.query(BarrioDB).filter(BarrioDB.idBarrio == id_barrio).first()
+
+    def create(self, barrio: BarrioDB):
+        self.db.add(barrio)
+        self.db.commit()
+        self.db.refresh(barrio)
+        return barrio
+
+    def update(self, barrio: BarrioDB):
+        self.db.commit()
+        self.db.refresh(barrio)
+        return barrio
+
 class RutaRepository:
     def __init__(self, db: Session):
         self.db = db

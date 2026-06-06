@@ -7,7 +7,7 @@ from typing import List
 from app.infrastructure.database import get_db
 from app.infrastructure.security import verify_jwt_token
 from app.application.use_cases import (
-    listar_barrios, listar_empresas,
+    listar_barrios, crear_barrio, actualizar_barrio, eliminar_barrio, listar_empresas,
     listar_rutas, crear_ruta, actualizar_ruta, eliminar_ruta,
     listar_horarios, crear_horario, actualizar_horario, eliminar_horario,
     listar_tiempos, crear_tiempo, actualizar_tiempo, eliminar_tiempo,
@@ -43,6 +43,27 @@ def check_admin(token: dict):
             status_code=403,
             detail="Operación no permitida. Se requiere rol de administrador."
         )
+
+# --- ENDPOINTS PARA BARRIOS (ESCRIBIR/ELIMINAR) ---
+@app.post("/api/barrios", response_model=Barrio)
+def post_barrio(barrio: Barrio, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    return crear_barrio(db, barrio)
+
+@app.put("/api/barrios/{id_barrio}", response_model=Barrio)
+def put_barrio(id_barrio: int, barrio: Barrio, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    resultado = actualizar_barrio(db, id_barrio, barrio)
+    if not resultado:
+        raise HTTPException(status_code=404, detail="Barrio no encontrado")
+    return resultado
+
+@app.delete("/api/barrios/{id_barrio}")
+def delete_barrio(id_barrio: int, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    if not eliminar_barrio(db, id_barrio):
+        raise HTTPException(status_code=404, detail="Barrio no encontrado")
+    return {"message": "Barrio eliminado con éxito"}
 
 # --- ENDPOINTS PARA RUTAS ---
 @app.get("/api/rutas", response_model=List[Ruta])

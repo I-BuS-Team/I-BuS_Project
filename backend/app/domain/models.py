@@ -30,7 +30,7 @@ class Empresa(BaseModel):
         from_attributes = True
     
 class Barrio(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombre: str
     
     class Config:
