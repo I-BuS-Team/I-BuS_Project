@@ -33,13 +33,19 @@
         Gestionar Empresas
       </h1>
 
-      <form [formGroup]="empresaForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full">
+      <!-- Feedback Banner -->
+      <div *ngIf="mensajeFeedback" [class]="'w-full p-3 rounded-lg text-center font-bold text-[13px] mb-4 border ' + (tipoFeedback === 'exito' ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-red-500/20 border-red-500/50 text-red-300')">
+        {{ mensajeFeedback }}
+      </div>
+
+      <form [formGroup]="empresaForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 w-full" (click)="$event.stopPropagation()">
         
         <!-- Search Row -->
-        <div class="flex items-center gap-3 w-full mb-2">
+        <div class="flex items-center gap-3 w-full mb-2 relative">
           <!-- Search input -->
           <div class="flex-1 flex items-center border border-white/40 rounded-lg h-[46px] px-3 bg-transparent">
-            <input formControlName="buscar" type="text" placeholder="Buscar Empresa"
+            <input formControlName="buscar" type="text" placeholder="Buscar Empresa..."
+              (input)="onSearchInput()" (click)="$event.stopPropagation()"
               class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             <div class="text-white/60 cursor-pointer">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,9 +54,20 @@
             </div>
           </div>
           <!-- Add Button -->
-          <button type="button" class="h-[46px] px-4 bg-ibus-yellow text-ibus-blue font-inter font-bold text-[14px] rounded-lg hover:bg-opacity-90 active:scale-95 transition-all whitespace-nowrap">
+          <button type="button" (click)="onNuevaEmpresa()" class="h-[46px] px-4 bg-ibus-yellow text-ibus-blue font-inter font-bold text-[14px] rounded-lg hover:bg-opacity-90 active:scale-95 transition-all whitespace-nowrap">
             + Empresa
           </button>
+
+          <!-- Search results dropdown overlay -->
+          <div *ngIf="showSearchResults && searchResults.length > 0" class="absolute left-0 top-[52px] w-full max-h-[200px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
+            <div *ngFor="let e of searchResults" (click)="selectEmpresa(e)" class="px-4 py-3 hover:bg-white/10 cursor-pointer border-b border-white/10 flex flex-col gap-1 transition-colors">
+              <span class="font-roboto font-bold text-[13px] text-ibus-yellow text-left">Empresa ID: {{ e.id }}</span>
+              <span class="text-[12px] text-white/90 text-left">Nombre: {{ e.nombreEmpresa }}</span>
+            </div>
+          </div>
+          <div *ngIf="showSearchResults && searchResults.length === 0 && this.empresaForm.get('buscar')?.value" class="absolute left-0 top-[52px] w-full bg-ibus-blue border border-white/20 rounded-lg p-4 shadow-xl z-50 text-center text-white/60 text-[13px]">
+            No se encontraron empresas con esa búsqueda
+          </div>
         </div>
 
         <!-- Inputs Row 1 (Id Empresa & Nombre) -->
@@ -60,9 +77,9 @@
             <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
               Id Empresa
             </label>
-            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0">
+            <div class="flex items-center border border-white/20 rounded-lg h-[50px] relative z-0 bg-white/5">
               <input formControlName="idEmpresa" type="text"
-                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none px-4">
+                class="w-full bg-transparent text-white/60 font-roboto text-[14px] focus:outline-none px-4">
             </div>
           </div>
           
@@ -71,23 +88,23 @@
             <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
               Nombre Empresa
             </label>
-            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0">
+            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
               <input formControlName="nombreEmpresa" type="text"
-                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none px-4">
+                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none">
             </div>
           </div>
         </div>
 
-        <!-- Inputs Row 2 (Nit & Teléfono) -->
+        <!-- Inputs Row 2 (Año Fundación & Teléfono) -->
         <div class="grid grid-cols-2 gap-4">
-          <!-- Nit -->
+          <!-- Año Fundación -->
           <div class="relative w-full">
             <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
-              NIT
+              Año Fundación
             </label>
-            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0">
-              <input formControlName="nit" type="text"
-                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none px-4">
+            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
+              <input formControlName="anioFundacion" type="number"
+                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none">
             </div>
           </div>
           
@@ -96,9 +113,9 @@
             <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
               Teléfono
             </label>
-            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0">
+            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
               <input formControlName="telefono" type="text"
-                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none px-4">
+                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none">
             </div>
           </div>
         </div>
@@ -114,15 +131,40 @@
           </div>
         </div>
 
+        <!-- Inputs Row 3 (Cant Buses & Cant Conductores) -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Cantidad Buses -->
+          <div class="relative w-full">
+            <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
+              Cant. Buses
+            </label>
+            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
+              <input formControlName="cantBuses" type="number"
+                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none">
+            </div>
+          </div>
+          
+          <!-- Cantidad Conductores -->
+          <div class="relative w-full">
+            <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
+              Cant. Conductores
+            </label>
+            <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
+              <input formControlName="cantConductores" type="number"
+                class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none">
+            </div>
+          </div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex justify-between items-center w-full mt-6 gap-4">
           <!-- Actualizar -->
-          <button type="submit" class="flex-1 py-3 rounded-lg font-barlow font-bold text-[15px] bg-ibus-yellow text-ibus-blue hover:bg-opacity-95 active:scale-95 transition-all text-center">
-            Actualizar Empresa
+          <button type="submit" [disabled]="empresaForm.invalid" class="flex-1 py-3 rounded-lg font-barlow font-bold text-[15px] bg-ibus-yellow text-ibus-blue hover:bg-opacity-95 active:scale-95 transition-all text-center disabled:opacity-40">
+            {{ selectedEmpresaId ? 'Actualizar Empresa' : 'Guardar Empresa' }}
           </button>
           
           <!-- Eliminar -->
-          <button type="button" (click)="onEliminar()" class="px-6 py-3 rounded-lg font-barlow font-bold text-[15px] bg-ibus-red text-ibus-dark-red hover:bg-opacity-95 active:scale-95 transition-all flex justify-center items-center">
+          <button *ngIf="selectedEmpresaId" type="button" (click)="onEliminar()" class="px-6 py-3 rounded-lg font-barlow font-bold text-[15px] bg-ibus-red text-ibus-dark-red hover:bg-opacity-95 active:scale-95 transition-all flex justify-center items-center">
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>

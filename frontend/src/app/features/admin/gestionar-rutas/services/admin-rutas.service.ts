@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Barrio {
-  id: number;
+  id?: number;
   nombre: string;
 }
 
 export interface Empresa {
-  id: number;
+  id?: number;
   nombreEmpresa: string;
   anioFundacion: number;
   direccion: string;
@@ -72,6 +72,18 @@ export class AdminRutasService {
 
   getEmpresas(): Observable<Empresa[]> {
     return this.http.get<Empresa[]>(`${this.apiUrl}/empresas`);
+  }
+
+  crearEmpresa(empresa: Empresa): Observable<Empresa> {
+    return this.http.post<Empresa>(`${this.apiUrl}/empresas`, empresa);
+  }
+
+  actualizarEmpresa(id: number, empresa: Empresa): Observable<Empresa> {
+    return this.http.put<Empresa>(`${this.apiUrl}/empresas/${id}`, empresa);
+  }
+
+  eliminarEmpresa(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/empresas/${id}`);
   }
 
   // --- RUTAS CRUD ---

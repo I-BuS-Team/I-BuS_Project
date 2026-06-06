@@ -22,6 +22,20 @@ class EmpresaRepository:
     def get_all(self):
         return self.db.query(EmpresaDB).all()
 
+    def get_by_id(self, id_empresa: int):
+        return self.db.query(EmpresaDB).filter(EmpresaDB.idEmpresa == id_empresa).first()
+
+    def create(self, empresa: EmpresaDB):
+        self.db.add(empresa)
+        self.db.commit()
+        self.db.refresh(empresa)
+        return empresa
+
+    def update(self, empresa: EmpresaDB):
+        self.db.commit()
+        self.db.refresh(empresa)
+        return empresa
+
 class BarrioRepository:
     def __init__(self, db: Session):
         self.db = db

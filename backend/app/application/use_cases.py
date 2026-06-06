@@ -7,7 +7,7 @@ from app.domain.models import (
     Barrio as DomainBarrio, Empresa as DomainEmpresa, Ruta as DomainRuta, 
     Horario as DomainHorario, Tiempo as DomainTiempo, DetalleRuta as DomainDetalleRuta
 )
-from app.infrastructure.models import BarrioDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB
+from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB
 
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
@@ -291,5 +291,79 @@ def eliminar_barrio(db: Session, id_barrio: int) -> bool:
     db.query(RutaBarrioDB).filter(RutaBarrioDB.idBarrio == id_barrio).delete()
     
     db.delete(barrio_db)
+    db.commit()
+    return True
+
+# --- CASOS DE USO DE EMPRESAS ---
+def crear_empresa(db: Session, empresa_in: DomainEmpresa):
+    repo = EmpresaRepository(db)
+    nueva_empresa = EmpresaDB(
+        nombreEmpresa=empresa_in.nombreEmpresa,
+        anioFundacion=empresa_in.anioFundacion,
+        direccion=empresa_in.direccion,
+        telefono=empresa_in.telefono,
+        cantBuses=empresa_in.cantBuses,
+        cantConductores=empresa_in.cantConductores
+    )
+    creada = repo.create(nueva_empresa)
+    return DomainEmpresa(
+        id=creada.idEmpresa,
+        nombreEmpresa=creada.nombreEmpresa,
+        anioFundacion=creada.anioFundacion,
+        direccion=creada.direccion,
+        telefono=creada.telefono,
+        cantBuses=creada.cantBuses,
+        cantConductores=creada.cantConductores
+    )
+
+def actualizar_empresa(db: Session, id_empresa: int, empresa_update: DomainEmpresa):
+    repo = EmpresaRepository(db)
+    empresa_db = repo.get_by_id(id_empresa)
+    if not empresa_db:
+        return None
+        
+    empresa_db.nombreEmpresa = empresa_update.nombreEmpresa
+    empresa_db.anioFundacion = empresa_update.anioFundacion
+    empresa_db.direccion = empresa_update.direccion
+    empresa_db.telefono = empresa_update.telefono
+    empresa_db.cantBuses = empresa_update.cantBuses
+    empresa_db.cantConductores = empresa_update.cantConductores
+    
+    actualizada = repo.update(empresa_db)
+    return DomainEmpresa(
+        id=actualizada.idEmpresa,
+        nombreEmpresa=actualizada.nombreEmpresa,
+        anioFundacion=actualizada.anioFundacion,
+        direccion=actualizada.direccion,
+        telefono=actualizada.telefono,
+        cantBuses=actualizada.cantBuses,
+        cantConductores=actualizada.cantConductores
+    )
+
+def eliminar_empresa(db: Session, id_empresa: int) -> bool:
+    repo = EmpresaRepository(db)
+    empresa_db = repo.get_by_id(id_empresa)
+    if not empresa_db:
+        return False
+        
+    # Verificar si la empresa tiene rutas asociadas
+    rutas_con_empresa = db.query(RutaDB).filter(RutaDB.idEmpresa == id_empresa).first()
+    if rutas_con_empresa:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar la empresa porque tiene rutas asignadas."
+        )
+        
+    # Verificar si la empresa tiene horarios asociados
+    horarios_con_empresa = db.query(HorarioDB).filter(HorarioDB.idEmpresa == id_empresa).first()
+    if horarios_con_empresa:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar la empresa porque tiene horarios registrados."
+        )
+        
+    db.delete(empresa_db)
     db.commit()
     return True

@@ -7,7 +7,8 @@ from typing import List
 from app.infrastructure.database import get_db
 from app.infrastructure.security import verify_jwt_token
 from app.application.use_cases import (
-    listar_barrios, crear_barrio, actualizar_barrio, eliminar_barrio, listar_empresas,
+    listar_barrios, crear_barrio, actualizar_barrio, eliminar_barrio,
+    listar_empresas, crear_empresa, actualizar_empresa, eliminar_empresa,
     listar_rutas, crear_ruta, actualizar_ruta, eliminar_ruta,
     listar_horarios, crear_horario, actualizar_horario, eliminar_horario,
     listar_tiempos, crear_tiempo, actualizar_tiempo, eliminar_tiempo,
@@ -64,6 +65,27 @@ def delete_barrio(id_barrio: int, db: Session = Depends(get_db), token: dict = D
     if not eliminar_barrio(db, id_barrio):
         raise HTTPException(status_code=404, detail="Barrio no encontrado")
     return {"message": "Barrio eliminado con éxito"}
+
+# --- ENDPOINTS PARA EMPRESAS (ESCRIBIR/ELIMINAR) ---
+@app.post("/api/empresas", response_model=Empresa)
+def post_empresa(empresa: Empresa, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    return crear_empresa(db, empresa)
+
+@app.put("/api/empresas/{id_empresa}", response_model=Empresa)
+def put_empresa(id_empresa: int, empresa: Empresa, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    resultado = actualizar_empresa(db, id_empresa, empresa)
+    if not resultado:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada")
+    return resultado
+
+@app.delete("/api/empresas/{id_empresa}")
+def delete_empresa(id_empresa: int, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    if not eliminar_empresa(db, id_empresa):
+        raise HTTPException(status_code=404, detail="Empresa no encontrada")
+    return {"message": "Empresa eliminada con éxito"}
 
 # --- ENDPOINTS PARA RUTAS ---
 @app.get("/api/rutas", response_model=List[Ruta])

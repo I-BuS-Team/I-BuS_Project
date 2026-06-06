@@ -103,20 +103,22 @@ export class GestionarBarrios implements OnInit {
   }
 
   get rutasAsignadas(): Ruta[] {
-    if (!this.selectedBarrioId) return [];
+    const barrioId = this.selectedBarrioId;
+    if (!barrioId) return [];
     return this.allRutas.filter(r => 
-      r.inicioRuta_id === this.selectedBarrioId || 
-      r.destinoRuta_id === this.selectedBarrioId || 
-      (r.barrio_ids && r.barrio_ids.includes(this.selectedBarrioId))
+      r.inicioRuta_id === barrioId || 
+      r.destinoRuta_id === barrioId || 
+      (r.barrio_ids && r.barrio_ids.includes(barrioId))
     );
   }
 
   get rutasDisponibles(): Ruta[] {
-    if (!this.selectedBarrioId) return [];
+    const barrioId = this.selectedBarrioId;
+    if (!barrioId) return [];
     return this.allRutas.filter(r => 
-      r.inicioRuta_id !== this.selectedBarrioId && 
-      r.destinoRuta_id !== this.selectedBarrioId && 
-      !(r.barrio_ids && r.barrio_ids.includes(this.selectedBarrioId))
+      r.inicioRuta_id !== barrioId && 
+      r.destinoRuta_id !== barrioId && 
+      !(r.barrio_ids && r.barrio_ids.includes(barrioId))
     );
   }
 

@@ -18,7 +18,7 @@ class Usuario(BaseModel):
         from_attributes = True
 
 class Empresa(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombreEmpresa: str
     anioFundacion: int
     direccion: str
