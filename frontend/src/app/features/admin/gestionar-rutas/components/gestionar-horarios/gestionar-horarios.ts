@@ -61,8 +61,8 @@ export class GestionarHorarios implements OnInit {
   onSearchInput(): void {
     const query = this.horarioForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allHorarios];
+      this.showSearchResults = true;
       return;
     }
 

@@ -1,33 +1,34 @@
 <div class="w-full min-h-screen bg-ibus-blue flex flex-col relative font-roboto text-white">
   
-  <!-- Top White Area (Full Width) -->
-  <div class="bg-white pt-10 pb-4 w-full relative md:pt-16">
-    <div class="relative w-full max-w-[420px] mx-auto flex justify-center items-center px-6">
+  <!-- Waves Header (ondasCompleto style) -->
+  <div class="relative w-full h-[180px] overflow-hidden md:h-[240px] bg-ibus-light-blue">
+    <!-- SVG Background -->
+    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 412 240" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0 31.45L9.84222 30.4616C19.6844 29.4733 39.3689 27.4966 58.9618 22.2585C78.6004 16.9215 98.1018 8.42179 117.74 15.6366C137.333 22.8515 157.018 45.9784 176.611 46.0773C196.249 46.2749 215.751 23.5433 235.389 11.3868C254.982 -0.868529 274.667 -2.44989 294.26 4.07311C313.898 10.6949 333.4 25.52 353.038 27.6943C372.631 29.7698 392.316 19.2934 402.158 13.9564L412 8.71829V239.988H402.158C392.316 239.988 372.631 239.988 353.038 239.988C333.4 239.988 313.898 239.988 294.26 239.988C274.667 239.988 254.982 239.988 235.389 239.988C215.751 239.988 196.249 239.988 176.611 239.988C157.018 239.988 137.333 239.988 117.74 239.988C98.1018 239.988 78.6004 239.988 58.9618 239.988C39.3689 239.988 19.6844 239.988 9.84222 239.988H0V31.45Z" fill="#175AA5"/>
+      <path d="M0 38.3683L9.84222 40.5427C19.6844 42.6182 39.3689 46.9668 58.9618 49.0423C78.6004 51.2167 98.1018 51.2167 117.74 56.1583C137.333 61.1 157.018 70.9833 176.611 70.9833C196.249 70.9833 215.751 61.1 235.389 59.4198C254.982 57.8385 274.667 64.3615 294.26 72.6635C313.898 80.8667 333.4 90.75 353.038 89.4652C372.631 88.0815 392.316 75.6285 402.158 69.3032L412 63.0767V239.988H402.158C392.316 239.988 372.631 239.988 353.038 239.988C333.4 239.988 313.898 239.988 294.26 239.988C274.667 239.988 254.982 239.988 235.389 239.988C215.751 239.988 196.249 239.988 176.611 239.988C157.018 239.988 137.333 239.988 117.74 239.988C98.1018 239.988 78.6004 239.988 58.9618 239.988C39.3689 239.988 19.6844 239.988 9.84222 239.988H0V38.3683Z" fill="#104A88"/>
+      <path d="M0 108.54L9.84222 105.575C19.6844 102.61 39.3689 96.68 58.9618 103.104C78.6004 109.528 98.1018 128.307 117.74 127.318C137.333 126.33 157.018 105.575 176.611 99.9415C196.249 94.4068 215.751 103.895 235.389 110.714C254.982 117.435 274.667 121.388 294.26 118.127C313.898 114.767 333.4 104.29 353.038 98.459C372.631 92.7267 392.316 91.7383 402.158 91.2442L412 90.75V239.988H402.158C392.316 239.988 372.631 239.988 353.038 239.988C333.4 239.988 313.898 239.988 294.26 239.988C274.667 239.988 254.982 239.988 235.389 239.988C215.751 239.988 196.249 239.988 176.611 239.988C157.018 239.988 137.333 239.988 117.74 239.988C98.1018 239.988 78.6004 239.988 58.9618 239.988C39.3689 239.988 19.6844 239.988 9.84222 239.988H0V108.54Z" fill="#0C3B6C"/>
+      <path d="M0 135.225H9.84222C19.6844 135.225 39.3689 135.225 58.9618 137.399C78.6004 139.475 98.1018 143.823 117.74 145.899C137.333 148.073 157.018 148.073 176.611 145.8C196.249 143.428 215.751 138.882 235.389 142.637C254.982 146.393 274.667 158.648 294.26 165.863C313.898 173.078 333.4 175.45 353.038 175.45C372.631 175.45 392.316 173.078 402.158 171.991L412 170.805V239.988H402.158C392.316 239.988 372.631 239.988 353.038 239.988C333.4 239.988 313.898 239.988 294.26 239.988C274.667 239.988 254.982 239.988 235.389 239.988C215.751 239.988 196.249 239.988 176.611 239.988C157.018 239.988 137.333 239.988 117.74 239.988C98.1018 239.988 78.6004 239.988 58.9618 239.988C39.3689 239.988 19.6844 239.988 9.84222 239.988H0V135.225Z" fill="#0A2C51"/>
+      <path d="M0 205.397L9.84222 202.926C19.6844 200.455 39.3689 195.513 58.9618 189.287C78.6004 182.962 98.1018 175.45 117.74 174.264C137.333 173.078 157.018 178.415 176.611 180.194C196.249 181.973 215.751 180.392 235.389 181.183C254.982 181.973 274.667 185.333 294.26 184.444C313.898 183.653 333.4 178.712 353.038 181.38C372.631 183.95 392.316 194.228 402.158 199.269L412 204.408V239.988H402.158C392.316 239.988 372.631 239.988 353.038 239.988C333.4 239.988 313.898 239.988 294.26 239.988C274.667 239.988 254.982 239.988 235.389 239.988C215.751 239.988 196.249 239.988 176.611 239.988C157.018 239.988 137.333 239.988 117.74 239.988C98.1018 239.988 78.6004 239.988 58.9618 239.988C39.3689 239.988 19.6844 239.988 9.84222 239.988H0V205.397Z" fill="#081E37"/>
+    </svg>
+
+    <!-- Overlay Content -->
+    <div class="relative w-full max-w-[420px] md:max-w-[750px] mx-auto flex justify-center items-center px-6 pt-10 pb-4 z-10 md:pt-16">
       <!-- Back Arrow -->
-      <a routerLink="/admin/dashboard" class="absolute left-6 cursor-pointer text-ibus-light-blue hover:text-ibus-yellow transition-colors">
+      <a routerLink="/admin/dashboard" class="absolute left-6 cursor-pointer text-white hover:text-ibus-yellow transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
       </a>
 
       <!-- Logo Title -->
-      <h2 class="font-barlow font-black text-[38px] text-ibus-light-blue tracking-wide mt-2 md:text-[44px]">I-BuS</h2>
+      <h2 class="font-barlow font-black text-[38px] text-white tracking-wide mt-2 md:text-[44px]">I-BuS</h2>
     </div>
-  </div>
-  
-  <!-- Wave Divider (Full Width) -->
-  <div class="bg-white relative h-[100px] w-full -mt-[1px] md:h-[130px]">
-    <svg class="absolute bottom-0 w-full h-full" viewBox="0 0 1440 200" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-      <path d="M0,80 C360,180 720,20 1080,130 C1260,170 1350,190 1440,170 L1440,200 L0,200 Z" fill="#175AA5" opacity="0.4"/>
-      <path d="M0,110 C360,190 720,60 1080,150 C1260,180 1350,195 1440,185 L1440,200 L0,200 Z" fill="#175AA5" opacity="0.8"/>
-      <path d="M0,140 C360,210 720,110 1080,170 L1440,200 L0,200 Z" fill="#081E37"/>
-    </svg>
   </div>
 
   <!-- Bottom Dark Blue Area (Full Width) -->
-  <div class="flex-1 bg-ibus-blue px-6 pb-12 flex flex-col justify-between -mt-6 z-10 md:pb-16">
+  <div class="flex-1 bg-ibus-blue px-6 pb-12 flex flex-col justify-between z-10 md:pb-16">
     
-    <div class="w-full max-w-[420px] mx-auto flex flex-col">
+    <div class="w-full max-w-[420px] md:max-w-[750px] mx-auto flex flex-col">
       <!-- Title -->
       <h1 class="font-barlow font-extrabold text-[26px] text-ibus-yellow text-center mb-6 tracking-wide md:text-[30px]">
         Gestionar Usuarios
@@ -45,7 +46,7 @@
           <!-- Search input -->
           <div class="flex-1 flex items-center border border-white/40 rounded-lg h-[46px] px-3 bg-transparent">
             <input formControlName="buscar" type="text" placeholder="Buscar por Correo"
-              (input)="onSearchInput()" (click)="$event.stopPropagation()"
+              (input)="onSearchInput()" (focus)="onSearchInput()" (click)="$event.stopPropagation(); onSearchInput()"
               class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             <div class="text-white/60 cursor-pointer">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -63,8 +63,8 @@ export class GestionarBarrios implements OnInit {
   onSearchInput(): void {
     const query = this.barrioForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allBarrios];
+      this.showSearchResults = true;
       return;
     }
 

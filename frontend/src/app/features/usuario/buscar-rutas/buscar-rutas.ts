@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BarriosService, Barrio, RutaCalcularResponse, TramoRuta } from './services/barrios.service';
@@ -28,7 +28,7 @@ const MOCK_BARRIOS: Barrio[] = [
 
 @Component({
   selector: 'app-buscar-rutas',
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: './buscar-rutas.html',
   styleUrl: './buscar-rutas.scss',
 })
@@ -43,6 +43,8 @@ export class BuscarRutas implements OnInit {
 
   dropdownOrigenAbierto = false;
   dropdownDestinoAbierto = false;
+  origenSearch = '';
+  destinoSearch = '';
 
   constructor(
     private fb: FormBuilder,
@@ -53,6 +55,20 @@ export class BuscarRutas implements OnInit {
     this.buscarForm = this.fb.group({
       origen: ['', Validators.required],
       destino: ['', Validators.required],
+    });
+
+    this.buscarForm.get('origen')?.valueChanges.subscribe(val => {
+      const name = this.getNombreBarrio(val);
+      if (name && this.origenSearch !== name) {
+        this.origenSearch = name;
+      }
+    });
+
+    this.buscarForm.get('destino')?.valueChanges.subscribe(val => {
+      const name = this.getNombreBarrio(val);
+      if (name && this.destinoSearch !== name) {
+        this.destinoSearch = name;
+      }
     });
 
     this.cargarBarrios();
@@ -76,20 +92,64 @@ export class BuscarRutas implements OnInit {
     this.dropdownOrigenAbierto = false;
   }
 
-  seleccionarOrigen(id: number, event?: MouseEvent): void {
+  onOrigenFocus(event: any): void {
+    event.stopPropagation();
+    this.dropdownOrigenAbierto = true;
+    this.dropdownDestinoAbierto = false;
+  }
+
+  onOrigenInput(event: any): void {
+    this.dropdownOrigenAbierto = true;
+    this.dropdownDestinoAbierto = false;
+  }
+
+  onDestinoFocus(event: any): void {
+    event.stopPropagation();
+    this.dropdownDestinoAbierto = true;
+    this.dropdownOrigenAbierto = false;
+  }
+
+  onDestinoInput(event: any): void {
+    this.dropdownDestinoAbierto = true;
+    this.dropdownOrigenAbierto = false;
+  }
+
+  get barriosFiltradosOrigen(): Barrio[] {
+    const selectedId = this.buscarForm.get('origen')?.value;
+    const selectedName = this.getNombreBarrio(selectedId);
+    const query = this.origenSearch.toLowerCase().trim();
+    if (!query || query === selectedName.toLowerCase().trim()) {
+      return this.barrios;
+    }
+    return this.barrios.filter(b => b.nombre.toLowerCase().includes(query));
+  }
+
+  get barriosFiltradosDestino(): Barrio[] {
+    const selectedId = this.buscarForm.get('destino')?.value;
+    const selectedName = this.getNombreBarrio(selectedId);
+    const query = this.destinoSearch.toLowerCase().trim();
+    if (!query || query === selectedName.toLowerCase().trim()) {
+      return this.barrios;
+    }
+    return this.barrios.filter(b => b.nombre.toLowerCase().includes(query));
+  }
+
+  seleccionarOrigen(barrio: Barrio, event?: MouseEvent): void {
     if (event) {
       event.stopPropagation();
     }
-    this.buscarForm.patchValue({ origen: id });
+    this.buscarForm.patchValue({ origen: barrio.id });
+    this.origenSearch = barrio.nombre;
     this.dropdownOrigenAbierto = false;
     this.buscarRuta();
   }
 
-  seleccionarDestino(id: number, event?: MouseEvent): void {
+  seleccionarDestino(barrio: Barrio, event?: MouseEvent): void {
     if (event) {
       event.stopPropagation();
     }
-    this.buscarForm.patchValue({ destino: id });
+    this.buscarForm.patchValue({ destino: barrio.id });
+    this.destinoSearch = barrio.nombre;
     this.dropdownDestinoAbierto = false;
     this.buscarRuta();
   }
