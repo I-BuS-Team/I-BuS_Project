@@ -97,6 +97,20 @@ class DetalleRutaRepository:
     def get_all(self):
         return self.db.query(DetalleRutaDB).all()
 
+    def get_by_id(self, id_detalle: int):
+        return self.db.query(DetalleRutaDB).filter(DetalleRutaDB.idDetalleRuta == id_detalle).first()
+        
+    def create(self, detalle: DetalleRutaDB):
+        self.db.add(detalle)
+        self.db.commit()
+        self.db.refresh(detalle)
+        return detalle
+        
+    def update(self, detalle: DetalleRutaDB):
+        self.db.commit()
+        self.db.refresh(detalle)
+        return detalle
+
 class RutaBarrioRepository:
     def __init__(self, db: Session):
         self.db = db

@@ -37,11 +37,12 @@ class Barrio(BaseModel):
         from_attributes = True
 
 class Ruta(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     idEmpresa: int
     inicioRuta_id: int
     destinoRuta_id: int
     frecuencia: str
+    barrio_ids: Optional[List[int]] = []
     
     class Config:
         from_attributes = True
