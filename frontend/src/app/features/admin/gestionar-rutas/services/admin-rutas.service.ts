@@ -64,6 +64,14 @@ export interface Estadisticas {
   coberturaRutas: ElementoCobertura[];
 }
 
+export interface Usuario {
+  id?: number;
+  idTipoUsuario: number;
+  email: string;
+  contrasena: string;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -176,5 +184,22 @@ export class AdminRutasService {
   // --- ESTADÍSTICAS ---
   getEstadisticas(): Observable<Estadisticas> {
     return this.http.get<Estadisticas>(`${this.apiUrl}/admin/estadisticas`);
+  }
+
+  // --- USUARIOS CRUD ---
+  getUsuarios(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.apiUrl}/admin/usuarios`);
+  }
+
+  crearUsuario(usuario: Usuario): Observable<Usuario> {
+    return this.http.post<Usuario>(`${this.apiUrl}/admin/usuarios`, usuario);
+  }
+
+  actualizarUsuario(id: number, usuario: Usuario): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.apiUrl}/admin/usuarios/${id}`, usuario);
+  }
+
+  eliminarUsuario(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/admin/usuarios/${id}`);
   }
 }

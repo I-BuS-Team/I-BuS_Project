@@ -1,13 +1,15 @@
 from sqlalchemy.orm import Session
 from app.infrastructure.repositories import (
     BarrioRepository, EmpresaRepository, RutaRepository, HorarioRepository, 
-    TiempoRepository, DetalleRutaRepository, RutaBarrioRepository
+    TiempoRepository, DetalleRutaRepository, RutaBarrioRepository, UsuarioRepository
 )
 from app.domain.models import (
     Barrio as DomainBarrio, Empresa as DomainEmpresa, Ruta as DomainRuta, 
-    Horario as DomainHorario, Tiempo as DomainTiempo, DetalleRuta as DomainDetalleRuta
+    Horario as DomainHorario, Tiempo as DomainTiempo, DetalleRuta as DomainDetalleRuta,
+    Usuario as DomainUsuario
 )
 from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB, UsuarioDB
+
 
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
@@ -429,3 +431,77 @@ def obtener_estadisticas(db: Session):
         "usoPorDia": uso_por_dia,
         "coberturaRutas": cobertura_rutas
     }
+
+# --- CASOS DE USO DE USUARIOS ---
+def listar_usuarios(db: Session):
+    repo = UsuarioRepository(db)
+    usuarios_db = repo.get_all()
+    return [
+        DomainUsuario(
+            id=u.idUsuario,
+            idTipoUsuario=u.idTipoUsuario,
+            email=u.email,
+            contrasena=u.contrasena
+        )
+        for u in usuarios_db
+    ]
+
+def crear_usuario(db: Session, usuario_in: DomainUsuario):
+    repo = UsuarioRepository(db)
+    existente = repo.get_by_email(usuario_in.email)
+    if existente:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="El correo electrónico ya se encuentra registrado."
+        )
+    
+    nuevo_usuario = UsuarioDB(
+        idTipoUsuario=usuario_in.idTipoUsuario,
+        email=usuario_in.email,
+        contrasena=usuario_in.contrasena
+    )
+    creado = repo.create(nuevo_usuario)
+    return DomainUsuario(
+        id=creado.idUsuario,
+        idTipoUsuario=creado.idTipoUsuario,
+        email=creado.email,
+        contrasena=creado.contrasena
+    )
+
+def actualizar_usuario(db: Session, id_usuario: int, usuario_update: DomainUsuario):
+    repo = UsuarioRepository(db)
+    usuario_db = repo.get_by_id(id_usuario)
+    if not usuario_db:
+        return None
+        
+    if usuario_db.email != usuario_update.email:
+        existente = repo.get_by_email(usuario_update.email)
+        if existente:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="El correo electrónico ya está en uso por otro usuario."
+            )
+            
+    usuario_db.idTipoUsuario = usuario_update.idTipoUsuario
+    usuario_db.email = usuario_update.email
+    if usuario_update.contrasena:
+        usuario_db.contrasena = usuario_update.contrasena
+        
+    actualizado = repo.update(usuario_db)
+    return DomainUsuario(
+        id=actualizado.idUsuario,
+        idTipoUsuario=actualizado.idTipoUsuario,
+        email=actualizado.email,
+        contrasena=actualizado.contrasena
+    )
+
+def eliminar_usuario(db: Session, id_usuario: int) -> bool:
+    repo = UsuarioRepository(db)
+    usuario_db = repo.get_by_id(id_usuario)
+    if not usuario_db:
+        return False
+    db.delete(usuario_db)
+    db.commit()
+    return True

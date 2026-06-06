@@ -1,4 +1,4 @@
-from app.domain.models import Barrio, Empresa, Ruta, Horario, Tiempo, DetalleRuta, RutaCalcularRequest, RutaCalcularResponse, EstadisticasResponse
+from app.domain.models import Barrio, Empresa, Ruta, Horario, Tiempo, DetalleRuta, RutaCalcularRequest, RutaCalcularResponse, EstadisticasResponse, Usuario
 from app.application.routing import calcular_ruta_optima
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +13,9 @@ from app.application.use_cases import (
     listar_horarios, crear_horario, actualizar_horario, eliminar_horario,
     listar_tiempos, crear_tiempo, actualizar_tiempo, eliminar_tiempo,
     listar_detalles_ruta, crear_detalle_ruta, actualizar_detalle_ruta, eliminar_detalle_ruta,
-    obtener_estadisticas
+    obtener_estadisticas, listar_usuarios, crear_usuario, actualizar_usuario, eliminar_usuario
 )
+
 
 app = FastAPI()
 
@@ -93,6 +94,33 @@ def delete_empresa(id_empresa: int, db: Session = Depends(get_db), token: dict =
 def get_estadisticas(db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
     check_admin(token)
     return obtener_estadisticas(db)
+
+# --- ENDPOINTS PARA USUARIOS (ADMIN CRUD) ---
+@app.get("/api/admin/usuarios", response_model=List[Usuario])
+def get_usuarios(db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    return listar_usuarios(db)
+
+@app.post("/api/admin/usuarios", response_model=Usuario)
+def post_usuario(usuario: Usuario, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    return crear_usuario(db, usuario)
+
+@app.put("/api/admin/usuarios/{id_usuario}", response_model=Usuario)
+def put_usuario(id_usuario: int, usuario: Usuario, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    resultado = actualizar_usuario(db, id_usuario, usuario)
+    if not resultado:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return resultado
+
+@app.delete("/api/admin/usuarios/{id_usuario}")
+def delete_usuario(id_usuario: int, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    if not eliminar_usuario(db, id_usuario):
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {"message": "Usuario eliminado con éxito"}
+
 
 # --- ENDPOINTS PARA RUTAS ---
 @app.get("/api/rutas", response_model=List[Ruta])

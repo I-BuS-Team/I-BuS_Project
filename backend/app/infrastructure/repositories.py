@@ -15,6 +15,24 @@ class UsuarioRepository:
     def get_all(self):
         return self.db.query(UsuarioDB).all()
 
+    def get_by_id(self, id_usuario: int):
+        return self.db.query(UsuarioDB).filter(UsuarioDB.idUsuario == id_usuario).first()
+
+    def get_by_email(self, email: str):
+        return self.db.query(UsuarioDB).filter(UsuarioDB.email == email).first()
+
+    def create(self, usuario: UsuarioDB):
+        self.db.add(usuario)
+        self.db.commit()
+        self.db.refresh(usuario)
+        return usuario
+
+    def update(self, usuario: UsuarioDB):
+        self.db.commit()
+        self.db.refresh(usuario)
+        return usuario
+
+
 class EmpresaRepository:
     def __init__(self, db: Session):
         self.db = db
