@@ -91,3 +91,19 @@ class TramoRuta(BaseModel):
 class RutaCalcularResponse(BaseModel):
     total_tramos: int
     camino: List[TramoRuta]
+
+class ElementoUsoDia(BaseModel):
+    dia: str
+    valor: int
+
+class ElementoCobertura(BaseModel):
+    nombre: str
+    porcentaje: int
+
+class EstadisticasResponse(BaseModel):
+    totalRutas: int
+    totalBarrios: int
+    totalEmpresas: int
+    usuariosActivos: int
+    usoPorDia: List[ElementoUsoDia]
+    coberturaRutas: List[ElementoCobertura]

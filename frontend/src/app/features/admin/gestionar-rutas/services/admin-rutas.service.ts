@@ -45,6 +45,25 @@ export interface DetalleRuta {
   cantidadPasajeros: number;
 }
 
+export interface ElementoUsoDia {
+  dia: string;
+  valor: number;
+}
+
+export interface ElementoCobertura {
+  nombre: string;
+  porcentaje: number;
+}
+
+export interface Estadisticas {
+  totalRutas: number;
+  totalBarrios: number;
+  totalEmpresas: number;
+  usuariosActivos: number;
+  usoPorDia: ElementoUsoDia[];
+  coberturaRutas: ElementoCobertura[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -152,5 +171,10 @@ export class AdminRutasService {
 
   eliminarDetalle(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/detalles/${id}`);
+  }
+
+  // --- ESTADÍSTICAS ---
+  getEstadisticas(): Observable<Estadisticas> {
+    return this.http.get<Estadisticas>(`${this.apiUrl}/admin/estadisticas`);
   }
 }

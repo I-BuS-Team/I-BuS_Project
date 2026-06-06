@@ -1,4 +1,4 @@
-from app.domain.models import Barrio, Empresa, Ruta, Horario, Tiempo, DetalleRuta, RutaCalcularRequest, RutaCalcularResponse
+from app.domain.models import Barrio, Empresa, Ruta, Horario, Tiempo, DetalleRuta, RutaCalcularRequest, RutaCalcularResponse, EstadisticasResponse
 from app.application.routing import calcular_ruta_optima
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +12,8 @@ from app.application.use_cases import (
     listar_rutas, crear_ruta, actualizar_ruta, eliminar_ruta,
     listar_horarios, crear_horario, actualizar_horario, eliminar_horario,
     listar_tiempos, crear_tiempo, actualizar_tiempo, eliminar_tiempo,
-    listar_detalles_ruta, crear_detalle_ruta, actualizar_detalle_ruta, eliminar_detalle_ruta
+    listar_detalles_ruta, crear_detalle_ruta, actualizar_detalle_ruta, eliminar_detalle_ruta,
+    obtener_estadisticas
 )
 
 app = FastAPI()
@@ -20,7 +21,7 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,6 +87,12 @@ def delete_empresa(id_empresa: int, db: Session = Depends(get_db), token: dict =
     if not eliminar_empresa(db, id_empresa):
         raise HTTPException(status_code=404, detail="Empresa no encontrada")
     return {"message": "Empresa eliminada con éxito"}
+
+# --- ENDPOINTS PARA ESTADÍSTICAS ---
+@app.get("/api/admin/estadisticas", response_model=EstadisticasResponse)
+def get_estadisticas(db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+    check_admin(token)
+    return obtener_estadisticas(db)
 
 # --- ENDPOINTS PARA RUTAS ---
 @app.get("/api/rutas", response_model=List[Ruta])

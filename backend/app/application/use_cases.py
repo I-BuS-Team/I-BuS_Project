@@ -7,7 +7,7 @@ from app.domain.models import (
     Barrio as DomainBarrio, Empresa as DomainEmpresa, Ruta as DomainRuta, 
     Horario as DomainHorario, Tiempo as DomainTiempo, DetalleRuta as DomainDetalleRuta
 )
-from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB
+from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, TiempoDB, DetalleRutaDB, RutaBarrioDB, UsuarioDB
 
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
@@ -367,3 +367,65 @@ def eliminar_empresa(db: Session, id_empresa: int) -> bool:
     db.delete(empresa_db)
     db.commit()
     return True
+
+def obtener_estadisticas(db: Session):
+    total_rutas = db.query(RutaDB).count()
+    total_barrios = db.query(BarrioDB).count()
+    total_empresas = db.query(EmpresaDB).count()
+    total_usuarios = db.query(UsuarioDB).count()
+    
+    # Calcular uso de rutas por día de la semana
+    detalles = db.query(DetalleRutaDB, TiempoDB).join(TiempoDB, DetalleRutaDB.idTiempo == TiempoDB.idTiempo).all()
+    consultas_por_dia = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0} # 0=Lun, ..., 6=Dom
+    for detalle, tiempo in detalles:
+        if tiempo.fecha:
+            dia_semana = tiempo.fecha.weekday()
+            consultas_por_dia[dia_semana] += (detalle.cantidadPasajeros or 0)
+            
+    uso_por_dia = [
+        {"dia": "Lun", "valor": consultas_por_dia[0]},
+        {"dia": "Mar", "valor": consultas_por_dia[1]},
+        {"dia": "Mié", "valor": consultas_por_dia[2]},
+        {"dia": "Jue", "valor": consultas_por_dia[3]},
+        {"dia": "Vie", "valor": consultas_por_dia[4]},
+        {"dia": "Sáb", "valor": consultas_por_dia[5]},
+        {"dia": "Dom", "valor": consultas_por_dia[6]}
+    ]
+    
+    # Calcular cobertura/eficiencia de rutas
+    rutas = db.query(RutaDB).all()
+    cobertura_rutas = []
+    for r in rutas:
+        # Sumar pasajeros de esta ruta en Python
+        detalles_ruta = db.query(DetalleRutaDB).filter(DetalleRutaDB.idRuta == r.idRuta).all()
+        total_pasajeros = sum(d.cantidadPasajeros or 0 for d in detalles_ruta)
+        
+        # Buscar origen y destino
+        inicio = db.query(BarrioDB).filter(BarrioDB.idBarrio == r.inicioRuta_id).first()
+        destino = db.query(BarrioDB).filter(BarrioDB.idBarrio == r.destinoRuta_id).first()
+        nombre_ruta = f"Ruta {r.idRuta} ({inicio.nombreBarrio if inicio else 'Origen'} - {destino.nombreBarrio if destino else 'Destino'})"
+        
+        # Calcular porcentaje
+        porcentaje = min(int(total_pasajeros / 10), 100) if total_pasajeros > 0 else 0
+        if porcentaje == 0:
+            # Si es 0, dar un porcentaje según el número de barrios en su recorrido
+            num_paradas = db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == r.idRuta).count()
+            porcentaje = min(num_paradas * 15, 100)
+            
+        cobertura_rutas.append({
+            "nombre": nombre_ruta,
+            "porcentaje": porcentaje
+        })
+        
+    # Ordenar y limitar a las mejores 5
+    cobertura_rutas.sort(key=lambda x: x["porcentaje"], reverse=True)
+    cobertura_rutas = cobertura_rutas[:5]
+    
+    return {
+        "totalRutas": total_rutas,
+        "totalBarrios": total_barrios,
+        "totalEmpresas": total_empresas,
+        "usuariosActivos": total_usuarios,
+        "usoPorDia": uso_por_dia,
+        "coberturaRutas": cobertura_rutas
+    }

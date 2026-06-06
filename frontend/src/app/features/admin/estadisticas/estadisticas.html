@@ -1,5 +1,14 @@
 <div class="w-full min-h-screen bg-ibus-blue flex flex-col relative font-roboto text-white">
   
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="fixed inset-0 z-50 flex items-center justify-center bg-ibus-blue/80 backdrop-blur-sm">
+    <div class="flex flex-col items-center gap-4">
+      <!-- Spinner -->
+      <div class="loading-spinner"></div>
+      <span class="font-inter text-[14px] text-white/80 animate-pulse">Cargando estadísticas...</span>
+    </div>
+  </div>
+
   <!-- Top White Area (Full Width) -->
   <div class="bg-white pt-10 pb-4 w-full relative md:pt-16">
     <div class="relative w-full max-w-[420px] mx-auto flex justify-center items-center px-6">
@@ -92,37 +101,23 @@
 
       <!-- Pure CSS/SVG Bar Chart Card -->
       <div class="border border-white/20 rounded-xl p-5 bg-white/5 w-full mb-6">
-        <h3 class="font-inter font-bold text-[14px] text-white/95 mb-4">Uso de Rutas por Día (Consultas)</h3>
+        <h3 class="font-inter font-bold text-[14px] text-white/95 mb-4">Uso de Rutas por Día (Pasajeros)</h3>
         
         <div class="flex items-end justify-between h-[150px] w-full pt-4 px-2 border-b border-white/20 relative">
           <!-- Bars -->
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-yellow rounded-t h-[60px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Lun</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-yellow rounded-t h-[80px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Mar</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-yellow rounded-t h-[110px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Mié</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-yellow rounded-t h-[95px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Jue</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-yellow rounded-t h-[130px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Vie</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-light-blue rounded-t h-[50px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Sáb</span>
-          </div>
-          <div class="flex flex-col items-center w-8">
-            <div class="w-4 bg-ibus-light-blue rounded-t h-[30px]"></div>
-            <span class="text-[10px] text-white/60 mt-1">Dom</span>
+          @for (item of usoPorDia; track item.dia) {
+            <div class="flex flex-col items-center w-8 group relative">
+              <!-- Tooltip on hover showing real value -->
+              <div class="absolute bottom-full mb-1 hidden group-hover:block bg-black/80 text-[10px] text-white px-2 py-0.5 rounded shadow whitespace-nowrap z-50">
+                {{ item.valor }} pas.
+              </div>
+              <div class="w-4 bg-ibus-yellow rounded-t transition-all duration-500" [style.height.px]="item.alturaPx"></div>
+              <span class="text-[10px] text-white/60 mt-1">{{ item.dia }}</span>
+            </div>
+          }
+          
+          <div *ngIf="usoPorDia.length === 0" class="absolute inset-0 flex items-center justify-center text-white/40 text-[12px]">
+            Cargando datos de uso de rutas...
           </div>
         </div>
       </div>
@@ -131,24 +126,23 @@
       <div class="border border-white/20 rounded-xl p-5 bg-white/5 w-full">
         <h3 class="font-inter font-bold text-[14px] text-white/95 mb-3">Eficiencia de Cobertura</h3>
         <div class="flex flex-col gap-3">
-          <div>
-            <div class="flex justify-between text-[11px] text-white/60 mb-1">
-              <span>Ruta 10 - Universitaria</span>
-              <span class="font-bold text-white">82%</span>
+          
+          @for (ruta of coberturaRutas; track ruta.nombre) {
+            <div>
+              <div class="flex justify-between text-[11px] text-white/60 mb-1">
+                <span class="truncate pr-2">{{ ruta.nombre }}</span>
+                <span class="font-bold text-white">{{ ruta.porcentaje }}%</span>
+              </div>
+              <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                <div class="bg-ibus-yellow h-full transition-all duration-500" [style.width.%]="ruta.porcentaje"></div>
+              </div>
             </div>
-            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-              <div class="bg-ibus-yellow h-full" style="width: 82%"></div>
-            </div>
+          }
+          
+          <div *ngIf="coberturaRutas.length === 0" class="text-white/40 text-[12px] text-center py-2">
+            No hay datos de eficiencia de cobertura disponibles.
           </div>
-          <div>
-            <div class="flex justify-between text-[11px] text-white/60 mb-1">
-              <span>Ruta 5 - Hospital</span>
-              <span class="font-bold text-white">56%</span>
-            </div>
-            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-              <div class="bg-ibus-light-blue h-full" style="width: 56%"></div>
-            </div>
-          </div>
+          
         </div>
       </div>
 
