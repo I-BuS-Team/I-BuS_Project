@@ -53,8 +53,8 @@ export class GestionarTiempos implements OnInit {
   onSearchInput(): void {
     const query = this.tiempoForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allTiempos];
+      this.showSearchResults = true;
       return;
     }
 

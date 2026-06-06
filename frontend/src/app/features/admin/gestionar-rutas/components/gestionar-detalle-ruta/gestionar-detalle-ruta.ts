@@ -79,8 +79,8 @@ export class GestionarDetalleRuta implements OnInit {
   onSearchInput(): void {
     const query = this.detalleForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allDetalles];
+      this.showSearchResults = true;
       return;
     }
 

@@ -58,8 +58,8 @@ export class GestionarEmpresas implements OnInit {
   onSearchInput(): void {
     const query = this.empresaForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allEmpresas];
+      this.showSearchResults = true;
       return;
     }
 

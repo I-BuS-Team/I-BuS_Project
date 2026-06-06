@@ -60,8 +60,8 @@ export class GestionarUsuarios implements OnInit {
   onSearchInput(): void {
     const query = this.usuarioForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allUsuarios];
+      this.showSearchResults = true;
       return;
     }
 

@@ -89,8 +89,8 @@ export class GestionarRutas implements OnInit {
   onSearchInput(): void {
     const query = this.rutaForm.get('buscar')?.value?.toLowerCase() || '';
     if (!query) {
-      this.searchResults = [];
-      this.showSearchResults = false;
+      this.searchResults = [...this.allRutas];
+      this.showSearchResults = true;
       return;
     }
 
