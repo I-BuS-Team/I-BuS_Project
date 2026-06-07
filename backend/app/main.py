@@ -20,9 +20,17 @@ from app.application.use_cases import (
 app = FastAPI()
 
 # CORS
+import os
+
+allowed_origins = ["http://localhost:4200", "http://127.0.0.1:4200"]
+env_origins = os.getenv("ALLOWED_ORIGINS")
+if env_origins:
+    # Soporta múltiples orígenes separados por comas
+    allowed_origins.extend([origin.strip() for origin in env_origins.split(",")])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"], 
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
