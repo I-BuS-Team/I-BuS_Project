@@ -9,7 +9,7 @@ class TipoUsuario(BaseModel):
         from_attributes = True
 
 class Usuario(BaseModel):
-    id: Optional[int]
+    id: Optional[str] = None
     idTipoUsuario: int
     email: str
     contrasena: str

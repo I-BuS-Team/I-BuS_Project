@@ -66,7 +66,7 @@ export interface Estadisticas {
 }
 
 export interface Usuario {
-  id?: number;
+  id?: string;
   idTipoUsuario: number;
   email: string;
   contrasena: string;
@@ -196,11 +196,11 @@ export class AdminRutasService {
     return this.http.post<Usuario>(`${this.apiUrl}/admin/usuarios`, usuario);
   }
 
-  actualizarUsuario(id: number, usuario: Usuario): Observable<Usuario> {
+  actualizarUsuario(id: string, usuario: Usuario): Observable<Usuario> {
     return this.http.put<Usuario>(`${this.apiUrl}/admin/usuarios/${id}`, usuario);
   }
 
-  eliminarUsuario(id: number): Observable<any> {
+  eliminarUsuario(id: string): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/admin/usuarios/${id}`);
   }
 }
