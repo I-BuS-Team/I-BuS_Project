@@ -16,7 +16,7 @@ export class GestionarUsuarios implements OnInit {
   allUsuarios: Usuario[] = [];
   searchResults: Usuario[] = [];
   showSearchResults = false;
-  selectedUsuarioId: number | null = null;
+  selectedUsuarioId: string | null = null;
   
   mensajeFeedback = '';
   tipoFeedback: 'exito' | 'error' = 'exito';
@@ -77,12 +77,12 @@ export class GestionarUsuarios implements OnInit {
     this.usuarioForm.patchValue({
       idUsuario: u.id ? `U - ${u.id}` : '',
       email: u.email,
-      contrasena: u.contrasena,
+      contrasena: '',
       idTipoUsuario: u.idTipoUsuario,
       buscar: ''
     });
 
-    this.usuarioForm.get('contrasena')?.setValidators([Validators.required]);
+    this.usuarioForm.get('contrasena')?.clearValidators();
     this.usuarioForm.get('contrasena')?.updateValueAndValidity();
 
     this.showSearchResults = false;

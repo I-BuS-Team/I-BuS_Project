@@ -94,7 +94,7 @@
         </div>
 
         <!-- Contraseña Input -->
-        <div class="relative w-full">
+        <div *ngIf="!selectedUsuarioId" class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
             Contraseña
           </label>

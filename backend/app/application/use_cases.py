@@ -374,7 +374,8 @@ def obtener_estadisticas(db: Session):
     total_rutas = db.query(RutaDB).count()
     total_barrios = db.query(BarrioDB).count()
     total_empresas = db.query(EmpresaDB).count()
-    total_usuarios = db.query(UsuarioDB).count()
+    from sqlalchemy import text
+    total_usuarios = db.execute(text("SELECT COUNT(*) FROM auth.users")).scalar()
     
     # Calcular uso de rutas por día de la semana
     detalles = db.query(DetalleRutaDB, TiempoDB).join(TiempoDB, DetalleRutaDB.idTiempo == TiempoDB.idTiempo).all()
@@ -434,21 +435,33 @@ def obtener_estadisticas(db: Session):
 
 # --- CASOS DE USO DE USUARIOS ---
 def listar_usuarios(db: Session):
-    repo = UsuarioRepository(db)
-    usuarios_db = repo.get_all()
-    return [
-        DomainUsuario(
-            id=u.idUsuario,
-            idTipoUsuario=u.idTipoUsuario,
-            email=u.email,
-            contrasena=u.contrasena
+    from sqlalchemy import text
+    result = db.execute(text("SELECT id, email, raw_user_meta_data FROM auth.users"))
+    usuarios = []
+    for row in result.fetchall():
+        uid, email, meta = row
+        meta = meta or {}
+        id_tipo_usuario = meta.get("idTipoUsuario", 2)
+        usuarios.append(
+            DomainUsuario(
+                id=str(uid),
+                idTipoUsuario=id_tipo_usuario,
+                email=email,
+                contrasena=""
+            )
         )
-        for u in usuarios_db
-    ]
+    return usuarios
 
 def crear_usuario(db: Session, usuario_in: DomainUsuario):
-    repo = UsuarioRepository(db)
-    existente = repo.get_by_email(usuario_in.email)
+    import uuid
+    import json
+    from sqlalchemy import text
+    
+    # Check if email exists
+    existente = db.execute(
+        text("SELECT id FROM auth.users WHERE email = :email"),
+        {"email": usuario_in.email}
+    ).fetchone()
     if existente:
         from fastapi import HTTPException
         raise HTTPException(
@@ -456,27 +469,107 @@ def crear_usuario(db: Session, usuario_in: DomainUsuario):
             detail="El correo electrónico ya se encuentra registrado."
         )
     
-    nuevo_usuario = UsuarioDB(
+    new_uid = str(uuid.uuid4())
+    nombre = usuario_in.email.split('@')[0]
+    raw_user_meta_data = {
+        "sub": new_uid,
+        "email": usuario_in.email,
+        "nombre": nombre,
+        "idTipoUsuario": usuario_in.idTipoUsuario,
+        "email_verified": True,
+        "phone_verified": False
+    }
+    
+    # Insert user in auth.users
+    db.execute(
+        text("""
+            INSERT INTO auth.users (
+                id, instance_id, email, encrypted_password, email_confirmed_at, 
+                invited_at, confirmation_token, confirmation_sent_at, recovery_token, 
+                recovery_sent_at, email_change_token_new, email_change, 
+                email_change_sent_at, last_sign_in_at, raw_app_meta_data, 
+                raw_user_meta_data, is_super_admin, created_at, updated_at, 
+                phone, phone_confirmed_at, phone_change, phone_change_token, 
+                phone_change_sent_at, confirmed_at, email_change_token_current, 
+                email_change_confirm_status, banned_until, reauthentication_token, 
+                reauthentication_sent_at, is_sso_user, deleted_at, is_anonymous,
+                aud, role
+            ) VALUES (
+                :id, '00000000-0000-0000-0000-000000000000', :email, crypt(:password, gen_salt('bf', 10)), now(),
+                NULL, '', NULL, '',
+                NULL, '', '',
+                NULL, NULL, '{}'::jsonb,
+                :raw_user_meta_data::jsonb, false, now(), now(),
+                NULL, NULL, '', '',
+                NULL, now(), '',
+                0, NULL, '',
+                NULL, false, NULL, false,
+                'authenticated', 'authenticated'
+            )
+        """),
+        {
+            "id": new_uid,
+            "email": usuario_in.email,
+            "password": usuario_in.contrasena,
+            "raw_user_meta_data": json.dumps(raw_user_meta_data)
+        }
+    )
+    
+    # Insert identity in auth.identities
+    identity_data = {
+        "sub": new_uid,
+        "email": usuario_in.email,
+        "nombre": nombre,
+        "idTipoUsuario": usuario_in.idTipoUsuario,
+        "email_verified": True,
+        "phone_verified": False
+    }
+    db.execute(
+        text("""
+            INSERT INTO auth.identities (
+                id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at, email
+            ) VALUES (
+                gen_random_uuid(), :id, :provider_id, :identity_data::jsonb, 'email', now(), now(), now(), :email
+            )
+        """),
+        {
+            "id": new_uid,
+            "provider_id": new_uid,
+            "identity_data": json.dumps(identity_data),
+            "email": usuario_in.email
+        }
+    )
+    
+    db.commit()
+    
+    return DomainUsuario(
+        id=new_uid,
         idTipoUsuario=usuario_in.idTipoUsuario,
         email=usuario_in.email,
-        contrasena=usuario_in.contrasena
-    )
-    creado = repo.create(nuevo_usuario)
-    return DomainUsuario(
-        id=creado.idUsuario,
-        idTipoUsuario=creado.idTipoUsuario,
-        email=creado.email,
-        contrasena=creado.contrasena
+        contrasena=""
     )
 
-def actualizar_usuario(db: Session, id_usuario: int, usuario_update: DomainUsuario):
-    repo = UsuarioRepository(db)
-    usuario_db = repo.get_by_id(id_usuario)
-    if not usuario_db:
+def actualizar_usuario(db: Session, id_usuario: str, usuario_update: DomainUsuario):
+    import json
+    from sqlalchemy import text
+    
+    # Check if user exists
+    user = db.execute(
+        text("SELECT id, email, raw_user_meta_data FROM auth.users WHERE id = :id"),
+        {"id": id_usuario}
+    ).fetchone()
+    if not user:
         return None
         
-    if usuario_db.email != usuario_update.email:
-        existente = repo.get_by_email(usuario_update.email)
+    uid, current_email, current_meta = user
+    current_meta = current_meta or {}
+    
+    # Check email uniqueness if email changed
+    if current_email != usuario_update.email:
+        existente = db.execute(
+            text("SELECT id FROM auth.users WHERE email = :email AND id != :id"),
+            {"email": usuario_update.email, "id": id_usuario}
+        ).fetchone()
         if existente:
             from fastapi import HTTPException
             raise HTTPException(
@@ -484,24 +577,121 @@ def actualizar_usuario(db: Session, id_usuario: int, usuario_update: DomainUsuar
                 detail="El correo electrónico ya está en uso por otro usuario."
             )
             
-    usuario_db.idTipoUsuario = usuario_update.idTipoUsuario
-    usuario_db.email = usuario_update.email
+    # Update raw_user_meta_data
+    nombre = usuario_update.email.split('@')[0]
+    updated_meta = {**current_meta}
+    updated_meta["email"] = usuario_update.email
+    updated_meta["nombre"] = nombre
+    updated_meta["idTipoUsuario"] = usuario_update.idTipoUsuario
+    
     if usuario_update.contrasena:
-        usuario_db.contrasena = usuario_update.contrasena
+        db.execute(
+            text("""
+                UPDATE auth.users 
+                SET email = :email, 
+                    encrypted_password = crypt(:password, gen_salt('bf', 10)), 
+                    raw_user_meta_data = :meta::jsonb,
+                    updated_at = now()
+                WHERE id = :id
+            """),
+            {
+                "email": usuario_update.email,
+                "password": usuario_update.contrasena,
+                "meta": json.dumps(updated_meta),
+                "id": id_usuario
+            }
+        )
+    else:
+        db.execute(
+            text("""
+                UPDATE auth.users 
+                SET email = :email, 
+                    raw_user_meta_data = :meta::jsonb,
+                    updated_at = now()
+                WHERE id = :id
+            """),
+            {
+                "email": usuario_update.email,
+                "meta": json.dumps(updated_meta),
+                "id": id_usuario
+            }
+        )
         
-    actualizado = repo.update(usuario_db)
+    # Update identities
+    identity = db.execute(
+        text("SELECT id FROM auth.identities WHERE user_id = :id"),
+        {"id": id_usuario}
+    ).fetchone()
+    
+    identity_data = {
+        "sub": id_usuario,
+        "email": usuario_update.email,
+        "nombre": nombre,
+        "idTipoUsuario": usuario_update.idTipoUsuario,
+        "email_verified": True,
+        "phone_verified": False
+    }
+    
+    if identity:
+        db.execute(
+            text("""
+                UPDATE auth.identities 
+                SET email = :email, 
+                    identity_data = :identity_data::jsonb,
+                    updated_at = now()
+                WHERE user_id = :id
+            """),
+            {
+                "email": usuario_update.email,
+                "identity_data": json.dumps(identity_data),
+                "id": id_usuario
+            }
+        )
+    else:
+        db.execute(
+            text("""
+                INSERT INTO auth.identities (
+                    id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at, email
+                ) VALUES (
+                    gen_random_uuid(), :id, :provider_id, :identity_data::jsonb, 'email', now(), now(), now(), :email
+                )
+            """),
+            {
+                "id": id_usuario,
+                "provider_id": id_usuario,
+                "identity_data": json.dumps(identity_data),
+                "email": usuario_update.email
+            }
+        )
+        
+    db.commit()
+    
     return DomainUsuario(
-        id=actualizado.idUsuario,
-        idTipoUsuario=actualizado.idTipoUsuario,
-        email=actualizado.email,
-        contrasena=actualizado.contrasena
+        id=id_usuario,
+        idTipoUsuario=usuario_update.idTipoUsuario,
+        email=usuario_update.email,
+        contrasena=""
     )
 
-def eliminar_usuario(db: Session, id_usuario: int) -> bool:
-    repo = UsuarioRepository(db)
-    usuario_db = repo.get_by_id(id_usuario)
-    if not usuario_db:
+def eliminar_usuario(db: Session, id_usuario: str) -> bool:
+    from sqlalchemy import text
+    
+    user = db.execute(
+        text("SELECT id FROM auth.users WHERE id = :id"),
+        {"id": id_usuario}
+    ).fetchone()
+    if not user:
         return False
-    db.delete(usuario_db)
+        
+    # Delete identities
+    db.execute(
+        text("DELETE FROM auth.identities WHERE user_id = :id"),
+        {"id": id_usuario}
+    )
+    # Delete user
+    db.execute(
+        text("DELETE FROM auth.users WHERE id = :id"),
+        {"id": id_usuario}
+    )
     db.commit()
     return True

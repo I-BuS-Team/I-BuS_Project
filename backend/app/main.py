@@ -115,7 +115,7 @@ def post_usuario(usuario: Usuario, db: Session = Depends(get_db), token: dict = 
     return crear_usuario(db, usuario)
 
 @app.put("/api/admin/usuarios/{id_usuario}", response_model=Usuario)
-def put_usuario(id_usuario: int, usuario: Usuario, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+def put_usuario(id_usuario: str, usuario: Usuario, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
     check_admin(token)
     resultado = actualizar_usuario(db, id_usuario, usuario)
     if not resultado:
@@ -123,7 +123,7 @@ def put_usuario(id_usuario: int, usuario: Usuario, db: Session = Depends(get_db)
     return resultado
 
 @app.delete("/api/admin/usuarios/{id_usuario}")
-def delete_usuario(id_usuario: int, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
+def delete_usuario(id_usuario: str, db: Session = Depends(get_db), token: dict = Depends(verify_jwt_token)):
     check_admin(token)
     if not eliminar_usuario(db, id_usuario):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
