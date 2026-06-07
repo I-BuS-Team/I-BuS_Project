@@ -1,29 +1,31 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BarriosService, Barrio, RutaCalcularResponse, TramoRuta } from './services/barrios.service';
+import * as L from 'leaflet';
+import 'leaflet-routing-machine';
 
 const MOCK_BARRIOS: Barrio[] = [
-  { id: 6, nombre: 'Centro' },
-  { id: 187, nombre: 'UPTC' },
-  { id: 127, nombre: 'El Rosario' },
-  { id: 132, nombre: 'José Antonio Galán' },
-  { id: 137, nombre: 'La Isla' },
-  { id: 149, nombre: 'Magdalena' },
-  { id: 150, nombre: 'Monquirá' },
-  { id: 152, nombre: 'Prado Norte' },
-  { id: 169, nombre: 'Sugamuxi' },
-  { id: 175, nombre: 'Villa del Sol' },
-  { id: 184, nombre: 'La Tolva' },
-  { id: 185, nombre: 'Vallado' },
-  { id: 186, nombre: 'La Ramada' },
-  { id: 188, nombre: 'Libertador' },
-  { id: 189, nombre: 'Coliseo' },
-  { id: 191, nombre: 'Morca' },
-  { id: 192, nombre: 'Puente Pesca' },
-  { id: 198, nombre: 'Plaza de Mercado' },
-  { id: 204, nombre: 'Jardín' }
+  { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 },
+  { id: 187, nombre: 'UPTC', latitud: 5.723, longitud: -72.926 },
+  { id: 127, nombre: 'El Rosario', latitud: 5.718, longitud: -72.939 },
+  { id: 132, nombre: 'José Antonio Galán', latitud: 5.711, longitud: -72.938 },
+  { id: 137, nombre: 'La Isla', latitud: 5.721, longitud: -72.942 },
+  { id: 149, nombre: 'Magdalena', latitud: 5.708, longitud: -72.929 },
+  { id: 150, nombre: 'Monquirá', latitud: 5.728, longitud: -72.919 },
+  { id: 152, nombre: 'Prado Norte', latitud: 5.731, longitud: -72.928 },
+  { id: 169, nombre: 'Sugamuxi', latitud: 5.713, longitud: -72.925 },
+  { id: 175, nombre: 'Villa del Sol', latitud: 5.706, longitud: -72.936 },
+  { id: 184, nombre: 'La Tolva', latitud: 5.742, longitud: -72.921 },
+  { id: 185, nombre: 'Vallado', latitud: 5.717, longitud: -72.928 },
+  { id: 186, nombre: 'La Ramada', latitud: 5.724, longitud: -72.945 },
+  { id: 188, nombre: 'Libertador', latitud: 5.714, longitud: -72.930 },
+  { id: 189, nombre: 'Coliseo', latitud: 5.719, longitud: -72.932 },
+  { id: 191, nombre: 'Morca', latitud: 5.702, longitud: -72.903 },
+  { id: 192, nombre: 'Puente Pesca', latitud: 5.728, longitud: -72.935 },
+  { id: 198, nombre: 'Plaza de Mercado', latitud: 5.712, longitud: -72.934 },
+  { id: 204, nombre: 'Jardín', latitud: 5.720, longitud: -72.923 }
 ];
 
 @Component({
@@ -32,7 +34,7 @@ const MOCK_BARRIOS: Barrio[] = [
   templateUrl: './buscar-rutas.html',
   styleUrl: './buscar-rutas.scss',
 })
-export class BuscarRutas implements OnInit {
+export class BuscarRutas implements OnInit, AfterViewInit {
   buscarForm!: FormGroup;
   mostrarDetalleRuta = false;
   barrios: Barrio[] = [];
@@ -45,6 +47,9 @@ export class BuscarRutas implements OnInit {
   dropdownDestinoAbierto = false;
   origenSearch = '';
   destinoSearch = '';
+
+  map!: L.Map;
+  routingControl: any = null;
 
   constructor(
     private fb: FormBuilder,
@@ -72,6 +77,24 @@ export class BuscarRutas implements OnInit {
     });
 
     this.cargarBarrios();
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
+
+  initMap(): void {
+    // Coordenadas del centro de Sogamoso
+    const sogamosoCentro: L.LatLngExpression = [5.715, -72.933];
+    
+    this.map = L.map('map', {
+      zoomControl: true
+    }).setView(sogamosoCentro, 14);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors, © CartoDB'
+    }).addTo(this.map);
   }
 
   @HostListener('document:click', ['$event'])
@@ -200,50 +223,132 @@ export class BuscarRutas implements OnInit {
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = false;
+        if (response && response.camino) {
+          setTimeout(() => {
+            this.trazarRutaReal(response.camino);
+          }, 100);
+        }
       },
       error: (err) => {
         console.warn('Error al calcular ruta en backend. Usando simulación local:', err);
-        // Simulamos el resultado localmente si no conecta con el backend o si estamos en offline
         this.rutaCalculada = this.generateMockRoute(Number(origen), Number(destino));
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = true;
+        setTimeout(() => {
+          this.trazarRutaReal(this.rutaCalculada!.camino);
+        }, 100);
       }
     });
   }
 
+  trazarRutaReal(camino: TramoRuta[]): void {
+    if (this.routingControl) {
+      this.map.removeControl(this.routingControl);
+      this.routingControl = null;
+    }
+
+    // Filtrar tramos con coordenadas válidas
+    const waypoints = camino
+      .filter(t => t.latitud !== 0.0 && t.longitud !== 0.0)
+      .map(t => L.latLng(t.latitud, t.longitud));
+
+    if (waypoints.length < 2) {
+      console.warn('No hay suficientes coordenadas válidas para trazar la ruta en el mapa.');
+      return;
+    }
+
+    // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
+    this.routingControl = (L as any).Routing.control({
+      waypoints: waypoints,
+      router: (L as any).Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1'
+      }),
+      lineOptions: {
+        styles: [
+          { color: '#0A2C51', opacity: 0.8, weight: 8 }, // Línea exterior oscura
+          { color: '#F9B233', opacity: 1.0, weight: 4 }  // Línea interior amarilla
+        ]
+      },
+      show: false,
+      routeWhileDragging: false,
+      addWaypoints: false, // Desactivar edición manual de paradas
+      draggableWaypoints: false, // Evitar arrastre manual de waypoints
+      showAlternatives: false,
+      fitSelectedRoutes: true,
+      createMarker: (i: number, waypoint: any, n: number) => {
+        const isStart = i === 0;
+        const isEnd = i === n - 1;
+        
+        const iconHtml = isStart 
+          ? `<div style="background-color: #F9B233; color: #0A2C51; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">O</div>`
+          : (isEnd 
+            ? `<div style="background-color: #EF4444; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">D</div>`
+            : `<div style="background-color: #175AA5; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1.5px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.25); font-family: 'Roboto', sans-serif;">${i}</div>`);
+
+        const label = isStart ? 'Origen' : (isEnd ? 'Destino' : `Parada intermedia: ${camino[i].nombre_barrio}`);
+        
+        return L.marker(waypoint.latLng, {
+          draggable: false,
+          icon: L.divIcon({
+            html: iconHtml,
+            className: '',
+            iconSize: isStart || isEnd ? [30, 30] : [22, 22],
+            iconAnchor: isStart || isEnd ? [15, 15] : [11, 11]
+          })
+        }).bindPopup(label);
+      }
+    }).addTo(this.map);
+  }
+
   generateMockRoute(origenId: number, destinoId: number): RutaCalcularResponse {
-    const origenNombre = this.getNombreBarrio(origenId);
-    const destinoNombre = this.getNombreBarrio(destinoId);
-    
-    const centroId = 6;
-    const centroNombre = 'Centro';
-    
+    const origenBarrio = this.barrios.find(b => b.id === origenId);
+    const destinoBarrio = this.barrios.find(b => b.id === destinoId);
+    const centroBarrio = this.barrios.find(b => b.id === 6) || { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 };
+
+    const origenNombre = origenBarrio?.nombre || `Barrio ${origenId}`;
+    const destinoNombre = destinoBarrio?.nombre || `Barrio ${destinoId}`;
+    const centroNombre = centroBarrio.nombre;
+
     const camino: TramoRuta[] = [
-      { barrio_id: origenId, nombre_barrio: origenNombre, ruta_id: null, nombre_ruta: null },
+      {
+        barrio_id: origenId,
+        nombre_barrio: origenNombre,
+        ruta_id: null,
+        nombre_ruta: null,
+        latitud: origenBarrio?.latitud || 5.715,
+        longitud: origenBarrio?.longitud || -72.933
+      },
     ];
-    
-    if (origenId !== centroId && destinoId !== centroId) {
+
+    if (origenId !== 6 && destinoId !== 6) {
       camino.push({
-        barrio_id: centroId,
+        barrio_id: 6,
         nombre_barrio: centroNombre,
         ruta_id: 38,
-        nombre_ruta: 'Cootradelsol (Frecuencia: 5-10 min)'
+        nombre_ruta: 'Cootradelsol (Frecuencia: 5-10 min)',
+        latitud: centroBarrio.latitud || 5.715,
+        longitud: centroBarrio.longitud || -72.933
       });
       camino.push({
         barrio_id: destinoId,
         nombre_barrio: destinoNombre,
         ruta_id: 39,
-        nombre_ruta: 'Flota Sugamuxi (Frecuencia: 10 min)'
+        nombre_ruta: 'Flota Sugamuxi (Frecuencia: 10 min)',
+        latitud: destinoBarrio?.latitud || 5.715,
+        longitud: destinoBarrio?.longitud || -72.933
       });
     } else {
       camino.push({
         barrio_id: destinoId,
         nombre_barrio: destinoNombre,
         ruta_id: 38,
-        nombre_ruta: 'TransAvella S.A. (Frecuencia: 8 min)'
+        nombre_ruta: 'TransAvella S.A. (Frecuencia: 8 min)',
+        latitud: destinoBarrio?.latitud || 5.715,
+        longitud: destinoBarrio?.longitud || -72.933
       });
     }
+
     return {
       total_tramos: camino.length - 1,
       camino: camino
@@ -260,5 +365,22 @@ export class BuscarRutas implements OnInit {
     this.mostrarDetalleRuta = false;
     this.rutaCalculada = null;
     this.mensajeError = '';
+    if (this.routingControl) {
+      this.map.removeControl(this.routingControl);
+      this.routingControl = null;
+    }
+  }
+
+  centrarEnOrigen(): void {
+    const origenId = this.buscarForm.get('origen')?.value;
+    if (origenId) {
+      const origenBarrio = this.barrios.find(b => b.id === Number(origenId));
+      if (origenBarrio && origenBarrio.latitud && origenBarrio.longitud) {
+        this.map.setView([origenBarrio.latitud, origenBarrio.longitud], 16, {
+          animate: true,
+          duration: 1.0
+        });
+      }
+    }
   }
 }

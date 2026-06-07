@@ -6,6 +6,8 @@ import { API_URL } from '../../../../config';
 export interface Barrio {
   id?: number;
   nombre: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface Empresa {
@@ -29,7 +31,7 @@ export interface Ruta {
 
 export interface Horario {
   id?: number;
-  idEmpresa: number;
+  idRuta: number;
   horaSalida: string;
   horaLlegada: string;
 }

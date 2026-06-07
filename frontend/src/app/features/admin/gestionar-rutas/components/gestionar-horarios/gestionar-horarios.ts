@@ -2,10 +2,11 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AdminRutasService, Horario, Empresa } from '../../services/admin-rutas.service';
+import { AdminRutasService, Horario, Ruta } from '../../services/admin-rutas.service';
 
 @Component({
   selector: 'app-gestionar-horarios',
+  standalone: true,
   imports: [ReactiveFormsModule, RouterModule, CommonModule],
   templateUrl: './gestionar-horarios.html',
   styleUrl: './gestionar-horarios.scss',
@@ -13,7 +14,7 @@ import { AdminRutasService, Horario, Empresa } from '../../services/admin-rutas.
 export class GestionarHorarios implements OnInit {
   horarioForm!: FormGroup;
   allHorarios: Horario[] = [];
-  allEmpresas: Empresa[] = [];
+  allRutas: Ruta[] = [];
   
   searchResults: Horario[] = [];
   showSearchResults = false;
@@ -31,7 +32,7 @@ export class GestionarHorarios implements OnInit {
     this.horarioForm = this.fb.group({
       buscar: [''],
       idHorario: [{ value: '', disabled: true }],
-      idEmpresa: ['', [Validators.required]],
+      idRuta: ['', [Validators.required]],
       horaSalida: ['', [Validators.required]],
       horaLlegada: ['', [Validators.required]],
     });
@@ -45,9 +46,11 @@ export class GestionarHorarios implements OnInit {
   }
 
   cargarDatos(): void {
-    this.adminService.getEmpresas().subscribe({
-      next: (e) => this.allEmpresas = e,
-      error: (err) => console.error('Error cargando empresas:', err)
+    this.adminService.getRutas().subscribe({
+      next: (r) => {
+        this.allRutas = r;
+      },
+      error: (err) => console.error('Error cargando rutas:', err)
     });
 
     this.adminService.getHorarios().subscribe({
@@ -68,10 +71,10 @@ export class GestionarHorarios implements OnInit {
 
     this.searchResults = this.allHorarios.filter(h => {
       const idMatches = h.id?.toString() === query;
-      const empresa = this.allEmpresas.find(e => e.id === h.idEmpresa);
-      const empresaMatches = empresa?.nombreEmpresa.toLowerCase().includes(query) || false;
+      const ruta = this.allRutas.find(r => r.id === h.idRuta);
+      const rutaMatches = ruta?.id?.toString() === query || ruta?.frecuencia.toLowerCase().includes(query) || false;
       const horasMatches = h.horaSalida.includes(query) || h.horaLlegada.includes(query);
-      return idMatches || empresaMatches || horasMatches;
+      return idMatches || rutaMatches || horasMatches;
     });
 
     this.showSearchResults = true;
@@ -86,7 +89,7 @@ export class GestionarHorarios implements OnInit {
 
     this.horarioForm.patchValue({
       idHorario: h.id ? `H - ${h.id}` : '',
-      idEmpresa: h.idEmpresa,
+      idRuta: h.idRuta,
       horaSalida: salida,
       horaLlegada: llegada,
       buscar: ''
@@ -99,16 +102,16 @@ export class GestionarHorarios implements OnInit {
     this.selectedHorarioId = null;
     this.horarioForm.patchValue({
       idHorario: 'Creando Nuevo Horario',
-      idEmpresa: '',
+      idRuta: '',
       horaSalida: '',
       horaLlegada: '',
       buscar: ''
     });
   }
 
-  getEmpresaName(id: number): string {
-    const emp = this.allEmpresas.find(e => e.id === id);
-    return emp ? emp.nombreEmpresa : `Empresa ${id}`;
+  getRutaDetails(id: number): string {
+    const ruta = this.allRutas.find(r => r.id === id);
+    return ruta ? `Ruta ${ruta.id} (Frecuencia: ${ruta.frecuencia})` : `Ruta ${id}`;
   }
 
   mostrarFeedback(mensaje: string, tipo: 'exito' | 'error'): void {
@@ -127,7 +130,7 @@ export class GestionarHorarios implements OnInit {
 
     const formVal = this.horarioForm.value;
     const horarioData: Horario = {
-      idEmpresa: Number(formVal.idEmpresa),
+      idRuta: Number(formVal.idRuta),
       horaSalida: formVal.horaSalida.length === 5 ? `${formVal.horaSalida}:00` : formVal.horaSalida,
       horaLlegada: formVal.horaLlegada.length === 5 ? `${formVal.horaLlegada}:00` : formVal.horaLlegada
     };

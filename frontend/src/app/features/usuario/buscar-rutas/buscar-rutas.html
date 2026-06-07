@@ -22,7 +22,7 @@
             (focus)="onOrigenFocus($event)"
             (input)="onOrigenInput($event)"
             (click)="$event.stopPropagation(); onOrigenFocus($event)"
-            placeholder="Origen"
+            placeholder="Punto Origen"
             class="w-full bg-transparent text-gray-800 font-roboto text-[13px] focus:outline-none placeholder-gray-500 pr-2">
           <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownOrigenAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownOrigen($event)">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -58,7 +58,7 @@
             (focus)="onDestinoFocus($event)"
             (input)="onDestinoInput($event)"
             (click)="$event.stopPropagation(); onDestinoFocus($event)"
-            placeholder="Destino"
+            placeholder="Punto Destino"
             class="w-full bg-transparent text-gray-800 font-roboto text-[13px] focus:outline-none placeholder-gray-500 pr-2">
           <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownDestinoAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownDestino($event)">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -115,7 +115,7 @@
         <!-- Origin Selector -->
         <div class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-20 pointer-events-none">
-            Barrio Origen
+            Punto Origen
           </label>
           <div class="flex items-center justify-between border border-white/40 hover:border-white/60 rounded-lg h-[50px] relative z-10 transition-all bg-ibus-blue px-3.5 cursor-pointer"
             [class.border-ibus-yellow]="dropdownOrigenAbierto">
@@ -129,7 +129,7 @@
                 (focus)="onOrigenFocus($event)"
                 (input)="onOrigenInput($event)"
                 (click)="$event.stopPropagation(); onOrigenFocus($event)"
-                placeholder="Selecciona Barrio Origen"
+                placeholder="Selecciona Punto Origen"
                 class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             </div>
             <!-- Chevron Down Icon -->
@@ -161,7 +161,7 @@
         <!-- Destination Selector -->
         <div class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-20 pointer-events-none">
-            Barrio Destino
+            Punto Destino
           </label>
           <div class="flex items-center justify-between border border-white/40 hover:border-white/60 rounded-lg h-[50px] relative z-10 transition-all bg-ibus-blue px-3.5 cursor-pointer"
             [class.border-ibus-yellow]="dropdownDestinoAbierto">
@@ -175,7 +175,7 @@
                 (focus)="onDestinoFocus($event)"
                 (input)="onDestinoInput($event)"
                 (click)="$event.stopPropagation(); onDestinoFocus($event)"
-                placeholder="Selecciona Barrio Destino"
+                placeholder="Selecciona Punto Destino"
                 class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             </div>
             <!-- Chevron Down Icon -->
@@ -371,51 +371,12 @@
   <!-- ========================================== -->
   <!-- CENTRAL/RIGHT AREA: MAP                    -->
   <!-- ========================================== -->
-  <div class="absolute inset-0 z-0 md:relative md:flex-1 md:h-full">
-    <svg class="w-full h-full" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-      <!-- Grid/Land background -->
-      <rect width="100%" height="100%" fill="#E5EDF4" />
-      
-      <!-- Streets / Blocks -->
-      <path d="M0,150 L800,250 M0,300 L800,420 M0,550 L800,680 M0,750 L800,880" stroke="#CAD4DF" stroke-width="45" stroke-linecap="square"/>
-      <path d="M150,0 L250,1000 M450,0 L520,1000 M650,0 L720,1000 M300,0 L380,1000" stroke="#CAD4DF" stroke-width="35" stroke-linecap="square"/>
-      
-      <!-- Minor streets -->
-      <path d="M100,200 L300,400 M500,400 L700,650 M100,700 L400,950" stroke="#D1DBE5" stroke-width="20"/>
-      
-      <!-- Text labels for streets -->
-      <text x="220" y="80" fill="#7C8B9E" font-size="12" font-weight="bold" transform="rotate(78 220 80)">Carrera 26</text>
-      <text x="320" y="320" fill="#7C8B9E" font-size="12" font-weight="bold" transform="rotate(75 320 320)">Carrera 17</text>
-      <text x="470" y="620" fill="#7C8B9E" font-size="12" font-weight="bold" transform="rotate(80 470 620)">Carrera 18</text>
-      <text x="80" y="280" fill="#7C8B9E" font-size="12" font-weight="bold" transform="rotate(8 80 280)">Calle 12</text>
-      <text x="580" y="580" fill="#7C8B9E" font-size="12" font-weight="bold" transform="rotate(10 580 580)">Calle 4 Sur</text>
-
-      <!-- Recent visited landmark -->
-      <circle cx="280" cy="500" r="16" fill="#10B981" />
-      <path d="M280,490 L274,498 H278 V508 H282 V498 H286 Z" fill="white"/>
-      <text x="305" y="495" fill="#047857" font-size="13" font-weight="bold">Fundación Colombia Somos Música</text>
-      <text x="305" y="512" fill="#065F46" font-size="11">Visitados recientemente</text>
-
-      <!-- Active Bus Route Line -->
-      <path d="M680,240 L520,380 L380,510 L300,580 L420,620 L480,680" stroke="#175AA5" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-      <path d="M680,240 L520,380 L380,510 L300,580 L420,620 L480,680" stroke="#2563EB" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
-
-      <!-- Destination Marker -->
-      <g transform="translate(420, 620)">
-        <circle cx="0" cy="-20" r="15" fill="#EF4444" opacity="0.3"/>
-        <path d="M0,0 C-10,-10 -15,-20 -15,-30 C-15,-40 -7,-48 0,-48 C7,-48 15,-40 15,-30 C15,-20 10,-10 0,0 Z" fill="#EF4444" />
-        <circle cx="0" cy="-30" r="6" fill="white" />
-        <rect x="-20" y="-68" width="40" height="18" rx="4" fill="#F59E0B" />
-        <text x="0" y="-55" fill="white" font-size="10" font-weight="bold" text-anchor="middle">La U</text>
-      </g>
-
-      <!-- Origin Marker -->
-      <circle cx="680" cy="240" r="10" fill="#175AA5" stroke="white" stroke-width="2" />
-    </svg>
+  <div class="absolute inset-0 z-0 md:relative md:flex-1 md:h-full bg-[#E5EDF4]">
+    <div id="map" class="w-full h-full"></div>
   </div>
 
   <!-- Re-center Button -->
-  <button (click)="buscarRuta()" class="absolute bottom-[96px] right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-ibus-light-blue hover:text-ibus-yellow active:scale-95 transition-all z-10 md:bottom-6">
+  <button (click)="centrarEnOrigen()" class="absolute bottom-[96px] right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-ibus-light-blue hover:text-ibus-yellow active:scale-95 transition-all z-10 md:bottom-6">
     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-9 4h3m12 0h3m-9-9v3m0 12v3" />
     </svg>

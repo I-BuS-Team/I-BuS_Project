@@ -6,6 +6,8 @@ import { API_URL } from '../../../../config';
 export interface Barrio {
   id: number;
   nombre: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface TramoRuta {
@@ -13,6 +15,8 @@ export interface TramoRuta {
   nombre_barrio: string;
   ruta_id?: number | null;
   nombre_ruta?: string | null;
+  latitud: number;
+  longitud: number;
 }
 
 export interface RutaCalcularResponse {

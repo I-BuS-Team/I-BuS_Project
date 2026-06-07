@@ -44,12 +44,7 @@ export class GestionarRutas implements OnInit {
 
     this.cargarDatos();
 
-    // Escuchar cambios en la empresa para actualizar el campo horario dinámicamente
-    this.rutaForm.get('empresa')?.valueChanges.subscribe(empId => {
-      if (empId) {
-        this.actualizarCampoHorario(Number(empId));
-      }
-    });
+    // Horarios are now tied to the selectedRouteId, not the company.
 
     // Escuchar cambios en inicioRuta_id y destinoRuta_id para actualizar el nombre de la ruta dinámicamente
     this.rutaForm.valueChanges.subscribe(() => {
@@ -124,7 +119,7 @@ export class GestionarRutas implements OnInit {
       buscar: ''
     });
 
-    this.actualizarCampoHorario(r.idEmpresa);
+    this.actualizarCampoHorario(r.id || null);
     this.actualizarNombreRuta();
     this.showSearchResults = false;
   }
@@ -144,8 +139,12 @@ export class GestionarRutas implements OnInit {
     });
   }
 
-  actualizarCampoHorario(empresaId: number): void {
-    const matched = this.allHorarios.filter(h => h.idEmpresa === empresaId);
+  actualizarCampoHorario(rutaId: number | null): void {
+    if (!rutaId) {
+      this.rutaForm.get('horario')?.setValue('Sin horarios asignados', { emitEvent: false });
+      return;
+    }
+    const matched = this.allHorarios.filter(h => h.idRuta === rutaId);
     if (matched.length === 0) {
       this.rutaForm.get('horario')?.setValue('Sin horarios asignados', { emitEvent: false });
     } else {
@@ -274,6 +273,7 @@ export class GestionarRutas implements OnInit {
       inicioRuta_id: r.inicioRuta_id,
       destinoRuta_id: r.destinoRuta_id
     });
+    this.actualizarCampoHorario(r.id || null);
   }
 
   onEliminar(): void {
