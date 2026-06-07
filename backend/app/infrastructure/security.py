@@ -16,6 +16,13 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
     # Intentamos obtener la clave de Supabase
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET") or os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY")
     
+    # Imprimimos el header del token para ver qué algoritmo utiliza (ej. HS256, RS256, etc.)
+    try:
+        header = jwt.get_unverified_header(token)
+        print(f"[DEBUG AUTH] JWT Header: {header}")
+    except Exception as e:
+        print(f"[DEBUG AUTH] Error al leer el header del JWT: {e}")
+        
     if not jwt_secret:
         if os.getenv("DEBUG", "False").lower() in ("true", "1", "yes"):
             try:
