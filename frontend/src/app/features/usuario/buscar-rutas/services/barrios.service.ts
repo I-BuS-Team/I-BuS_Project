@@ -8,6 +8,7 @@ export interface Barrio {
   nombre: string;
   latitud?: number;
   longitud?: number;
+  usado?: boolean;
 }
 
 export interface TramoRuta {
@@ -30,6 +31,15 @@ export interface RutaCalcularResponse {
 export class BarriosService {
   private apiUrl = API_URL;
 
+  private searchState = {
+    origenId: null as number | null,
+    destinoId: null as number | null,
+    rutaCalculada: null as RutaCalcularResponse | null,
+    mostrarDetalleRuta: false,
+    modoOffline: false,
+    tiempoEstimado: 0
+  };
+
   constructor(private http: HttpClient) {}
 
   getBarrios(): Observable<Barrio[]> {
@@ -41,5 +51,31 @@ export class BarriosService {
       origen_id: origenId,
       destino_id: destinoId
     });
+  }
+
+  guardarEstadoBusqueda(origenId: number | null, destinoId: number | null, rutaCalculada: RutaCalcularResponse | null, mostrarDetalle: boolean, offline: boolean, tiempo: number) {
+    this.searchState = {
+      origenId,
+      destinoId,
+      rutaCalculada,
+      mostrarDetalleRuta: mostrarDetalle,
+      modoOffline: offline,
+      tiempoEstimado: tiempo
+    };
+  }
+
+  obtenerEstadoBusqueda() {
+    return this.searchState;
+  }
+
+  limpiarEstadoBusqueda() {
+    this.searchState = {
+      origenId: null,
+      destinoId: null,
+      rutaCalculada: null,
+      mostrarDetalleRuta: false,
+      modoOffline: false,
+      tiempoEstimado: 0
+    };
   }
 }

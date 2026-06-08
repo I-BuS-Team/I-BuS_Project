@@ -34,6 +34,7 @@ class Barrio(BaseModel):
     nombre: str
     latitud: Optional[float] = None
     longitud: Optional[float] = None
+    usado: Optional[bool] = None
     
     class Config:
         from_attributes = True

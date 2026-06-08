@@ -14,8 +14,20 @@ from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, Ti
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
     barrios_db = repo.get_all()
+    
+    inicio_ids = {r.inicioRuta_id for r in db.query(RutaDB).filter(RutaDB.inicioRuta_id != None).all()}
+    destino_ids = {r.destinoRuta_id for r in db.query(RutaDB).filter(RutaDB.destinoRuta_id != None).all()}
+    rutabarrio_ids = {rb.idBarrio for rb in db.query(RutaBarrioDB).all()}
+    used_ids = inicio_ids.union(destino_ids).union(rutabarrio_ids)
+    
     return [
-        DomainBarrio(id=b.idBarrio, nombre=b.nombreBarrio)
+        DomainBarrio(
+            id=b.idBarrio,
+            nombre=b.nombreBarrio,
+            latitud=b.latitud,
+            longitud=b.longitud,
+            usado=(b.idBarrio in used_ids)
+        )
         for b in barrios_db
     ]
 

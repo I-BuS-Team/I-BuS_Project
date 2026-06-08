@@ -8,6 +8,7 @@ export interface Barrio {
   nombre: string;
   latitud?: number;
   longitud?: number;
+  usado?: boolean;
 }
 
 export interface Empresa {

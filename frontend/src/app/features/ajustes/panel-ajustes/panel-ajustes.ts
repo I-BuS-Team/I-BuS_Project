@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-panel-ajustes',
@@ -15,6 +16,9 @@ export class PanelAjustes implements OnInit {
   notificaciones = true;
   tamanoTexto = 50;
   idioma = 'es';
+  isAdminUser = false;
+
+  constructor(private authService: AuthService) {}
 
   translations: any = {
     es: {
@@ -27,11 +31,13 @@ export class PanelAjustes implements OnInit {
       general: 'General',
       notificaciones: 'Notificaciones',
       idioma: 'Idioma',
-      idiomaSeleccionado: 'Español >',
+      idiomaSeleccionado: 'Español',
       ayuda: 'Ayuda y Soporte',
       terminos: 'Términos y Condiciones',
       version: 'I - BuS Versión 1.0.0',
-      ciudad: 'Sogamoso, 2025'
+      ciudad: 'Sogamoso, 2025',
+      perfil: 'Perfil',
+      mapa: 'Mapa'
     },
     en: {
       ajustes: 'Settings',
@@ -43,15 +49,31 @@ export class PanelAjustes implements OnInit {
       general: 'General',
       notificaciones: 'Notifications',
       idioma: 'Language',
-      idiomaSeleccionado: 'English >',
+      idiomaSeleccionado: 'English',
       ayuda: 'Help & Support',
       terminos: 'Terms & Conditions',
       version: 'I - BuS Version 1.0.0',
-      ciudad: 'Sogamoso, 2025'
+      ciudad: 'Sogamoso, 2025',
+      perfil: 'Profile',
+      mapa: 'Map'
     }
   };
 
   ngOnInit(): void {
+    // Cargar rol de usuario
+    this.authService.getCurrentUser().subscribe({
+      next: (user) => {
+        if (user) {
+          const email = user.email || '';
+          const idTipo = user.user_metadata?.['idTipoUsuario'];
+          this.isAdminUser = email === 'admin@ibus.com' || idTipo === 1 || idTipo === '1';
+        }
+      },
+      error: (err) => {
+        console.warn('Error al obtener el rol de usuario:', err);
+      }
+    });
+
     // Cargar configuraciones guardadas
     const savedContraste = localStorage.getItem('altoContraste');
     this.altoContraste = savedContraste === 'true';

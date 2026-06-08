@@ -3,84 +3,92 @@
   <!-- ========================================== -->
   <!-- MOBILE: FLOATING SEARCH BOX (WHITE THEME)  -->
   <!-- ========================================== -->
-  <div class="absolute top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-white rounded-2xl shadow-xl p-4 z-10 flex items-center gap-4 md:hidden">
+  <div class="absolute top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-white dark:bg-[#0A2C51] border border-transparent dark:border-white/10 rounded-2xl shadow-xl p-4 z-10 flex items-center gap-4 md:hidden">
     <!-- Connecting dashed line -->
     <div class="flex flex-col items-center justify-between h-[66px] py-1">
-      <div class="w-3 h-3 rounded-full border-2 border-ibus-light-blue bg-white"></div>
-      <div class="w-0.5 h-full border-l-2 border-dashed border-gray-300"></div>
-      <div class="w-3 h-3 bg-ibus-light-blue"></div>
+      <div class="w-3 h-3 rounded-full border-2 border-ibus-yellow bg-transparent"></div>
+      <div class="w-0.5 h-full border-l-2 border-dashed border-gray-300 dark:border-white/20"></div>
+      <div class="w-3 h-3 bg-red-500 rounded-sm"></div>
     </div>
     
     <!-- Input Fields (styled like original text inputs but functional selects) -->
     <form [formGroup]="buscarForm" class="flex-1 flex flex-col gap-2">
       <!-- Origin Selector -->
       <div class="relative w-full">
-        <div class="w-full bg-[#F3F4F6] hover:bg-[#EAECEF] rounded-lg h-9 flex items-center justify-between px-3 transition-colors border border-transparent">
+        <div class="w-full bg-[#F3F4F6] dark:bg-[#0d2746] hover:bg-[#EAECEF] dark:hover:bg-[#123054] rounded-lg h-9 flex items-center justify-between px-3 transition-colors border border-transparent">
           <input type="text"
             [(ngModel)]="origenSearch"
             [ngModelOptions]="{standalone: true}"
             (focus)="onOrigenFocus($event)"
             (input)="onOrigenInput($event)"
             (click)="$event.stopPropagation(); onOrigenFocus($event)"
-            placeholder="Punto Origen"
-            class="w-full bg-transparent text-gray-800 font-roboto text-[13px] focus:outline-none placeholder-gray-500 pr-2">
-          <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownOrigenAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownOrigen($event)">
+            [placeholder]="t('puntoOrigen')"
+            class="w-full bg-transparent text-gray-800 dark:text-white font-roboto text-[13px] focus:outline-none placeholder-gray-500 dark:placeholder-white/40 pr-2">
+          <svg class="w-4 h-4 text-gray-500 dark:text-white/60 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownOrigenAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownOrigen($event)">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
 
         <!-- Custom Dropdown List -->
         <div *ngIf="dropdownOrigenAbierto"
-          class="absolute top-10 left-0 w-full bg-white border border-gray-200/80 rounded-xl shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1.5 animate-fadeIn">
+          class="absolute top-10 left-0 w-full bg-white dark:bg-[#0d2746] border border-gray-200/80 dark:border-white/10 rounded-xl shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1.5 animate-fadeIn custom-scrollbar">
           <div *ngFor="let barrio of barriosFiltradosOrigen"
             (click)="seleccionarOrigen(barrio, $event)"
-            class="px-4 py-2.5 hover:bg-ibus-light-blue/5 hover:text-ibus-light-blue text-gray-700 text-[13px] font-roboto cursor-pointer transition-all flex justify-between items-center border-b border-gray-50 last:border-b-0"
-            [class.text-ibus-light-blue]="buscarForm.get('origen')?.value === barrio.id"
-            [class.bg-ibus-light-blue/5]="buscarForm.get('origen')?.value === barrio.id"
+            [class.opacity-40]="barrio.usado === false"
+            [class.pointer-events-none]="barrio.usado === false"
+            class="px-4 py-2.5 hover:bg-ibus-light-blue/5 dark:hover:bg-white/10 hover:text-ibus-light-blue dark:hover:text-ibus-yellow text-gray-700 dark:text-white/90 text-[13px] font-roboto cursor-pointer transition-all flex justify-between items-center border-b border-gray-50 dark:border-white/5 last:border-b-0"
+            [class.text-ibus-light-blue]="buscarForm.get('origen')?.value === barrio.id && !isDark()"
+            [class.text-ibus-yellow]="buscarForm.get('origen')?.value === barrio.id && isDark()"
+            [class.bg-ibus-light-blue/5]="buscarForm.get('origen')?.value === barrio.id && !isDark()"
+            [class.bg-white/5]="buscarForm.get('origen')?.value === barrio.id && isDark()"
             [class.font-semibold]="buscarForm.get('origen')?.value === barrio.id">
             <span>{{ barrio.nombre }}</span>
-            <svg *ngIf="buscarForm.get('origen')?.value === barrio.id" class="w-3.5 h-3.5 text-ibus-light-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg *ngIf="buscarForm.get('origen')?.value === barrio.id" class="w-3.5 h-3.5 text-ibus-light-blue dark:text-ibus-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div *ngIf="barriosFiltradosOrigen.length === 0" class="px-4 py-2.5 text-gray-400 text-[13px] font-roboto text-center">
-            No se encontraron barrios
+          <div *ngIf="barriosFiltradosOrigen.length === 0" class="px-4 py-2.5 text-gray-400 dark:text-white/40 text-[13px] font-roboto text-center">
+            {{ t('noBarrios') }}
           </div>
         </div>
       </div>
 
       <!-- Destination Selector -->
       <div class="relative w-full">
-        <div class="w-full bg-[#F3F4F6] hover:bg-[#EAECEF] rounded-lg h-9 flex items-center justify-between px-3 transition-colors border border-transparent">
+        <div class="w-full bg-[#F3F4F6] dark:bg-[#0d2746] hover:bg-[#EAECEF] dark:hover:bg-[#123054] rounded-lg h-9 flex items-center justify-between px-3 transition-colors border border-transparent">
           <input type="text"
             [(ngModel)]="destinoSearch"
             [ngModelOptions]="{standalone: true}"
             (focus)="onDestinoFocus($event)"
             (input)="onDestinoInput($event)"
             (click)="$event.stopPropagation(); onDestinoFocus($event)"
-            placeholder="Punto Destino"
-            class="w-full bg-transparent text-gray-800 font-roboto text-[13px] focus:outline-none placeholder-gray-500 pr-2">
-          <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownDestinoAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownDestino($event)">
+            [placeholder]="t('puntoDestino')"
+            class="w-full bg-transparent text-gray-800 dark:text-white font-roboto text-[13px] focus:outline-none placeholder-gray-500 dark:placeholder-white/40 pr-2">
+          <svg class="w-4 h-4 text-gray-500 dark:text-white/60 transition-transform duration-200 flex-shrink-0 cursor-pointer" [class.rotate-180]="dropdownDestinoAbierto" fill="none" stroke="currentColor" viewBox="0 0 24 24" (click)="toggleDropdownDestino($event)">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
 
         <!-- Custom Dropdown List -->
         <div *ngIf="dropdownDestinoAbierto"
-          class="absolute top-10 left-0 w-full bg-white border border-gray-200/80 rounded-xl shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1.5 animate-fadeIn">
+          class="absolute top-10 left-0 w-full bg-white dark:bg-[#0d2746] border border-gray-200/80 dark:border-white/10 rounded-xl shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1.5 animate-fadeIn custom-scrollbar">
           <div *ngFor="let barrio of barriosFiltradosDestino"
             (click)="seleccionarDestino(barrio, $event)"
-            class="px-4 py-2.5 hover:bg-ibus-light-blue/5 hover:text-ibus-light-blue text-gray-700 text-[13px] font-roboto cursor-pointer transition-all flex justify-between items-center border-b border-gray-50 last:border-b-0"
-            [class.text-ibus-light-blue]="buscarForm.get('destino')?.value === barrio.id"
-            [class.bg-ibus-light-blue/5]="buscarForm.get('destino')?.value === barrio.id"
+            [class.opacity-40]="barrio.usado === false"
+            [class.pointer-events-none]="barrio.usado === false"
+            class="px-4 py-2.5 hover:bg-ibus-light-blue/5 dark:hover:bg-white/10 hover:text-ibus-light-blue dark:hover:text-ibus-yellow text-gray-700 dark:text-white/90 text-[13px] font-roboto cursor-pointer transition-all flex justify-between items-center border-b border-gray-50 dark:border-white/5 last:border-b-0"
+            [class.text-ibus-light-blue]="buscarForm.get('destino')?.value === barrio.id && !isDark()"
+            [class.text-ibus-yellow]="buscarForm.get('destino')?.value === barrio.id && isDark()"
+            [class.bg-ibus-light-blue/5]="buscarForm.get('destino')?.value === barrio.id && !isDark()"
+            [class.bg-white/5]="buscarForm.get('destino')?.value === barrio.id && isDark()"
             [class.font-semibold]="buscarForm.get('destino')?.value === barrio.id">
             <span>{{ barrio.nombre }}</span>
-            <svg *ngIf="buscarForm.get('destino')?.value === barrio.id" class="w-3.5 h-3.5 text-ibus-light-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg *ngIf="buscarForm.get('destino')?.value === barrio.id" class="w-3.5 h-3.5 text-ibus-light-blue dark:text-ibus-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div *ngIf="barriosFiltradosDestino.length === 0" class="px-4 py-2.5 text-gray-400 text-[13px] font-roboto text-center">
-            No se encontraron barrios
+          <div *ngIf="barriosFiltradosDestino.length === 0" class="px-4 py-2.5 text-gray-400 dark:text-white/40 text-[13px] font-roboto text-center">
+            {{ t('noBarrios') }}
           </div>
         </div>
       </div>
@@ -115,7 +123,7 @@
         <!-- Origin Selector -->
         <div class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-20 pointer-events-none">
-            Punto Origen
+            {{ t('puntoOrigen') }}
           </label>
           <div class="flex items-center justify-between border border-white/40 hover:border-white/60 rounded-lg h-[50px] relative z-10 transition-all bg-ibus-blue px-3.5 cursor-pointer"
             [class.border-ibus-yellow]="dropdownOrigenAbierto">
@@ -129,7 +137,7 @@
                 (focus)="onOrigenFocus($event)"
                 (input)="onOrigenInput($event)"
                 (click)="$event.stopPropagation(); onOrigenFocus($event)"
-                placeholder="Selecciona Punto Origen"
+                [placeholder]="t('seleccionaOrigen')"
                 class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             </div>
             <!-- Chevron Down Icon -->
@@ -140,9 +148,11 @@
 
           <!-- Custom Dropdown List -->
           <div *ngIf="dropdownOrigenAbierto"
-            class="absolute top-[55px] left-0 w-full bg-[#0d2746] border border-white/10 rounded-lg shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/20">
+            class="absolute top-[55px] left-0 w-full bg-[#0d2746] border border-white/10 rounded-lg shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1 custom-scrollbar">
             <div *ngFor="let barrio of barriosFiltradosOrigen"
               (click)="seleccionarOrigen(barrio, $event)"
+              [class.opacity-40]="barrio.usado === false"
+              [class.pointer-events-none]="barrio.usado === false"
               class="px-4 py-2.5 hover:bg-white/10 text-white/90 text-sm font-inter cursor-pointer transition-all flex justify-between items-center border-b border-white/5 last:border-b-0"
               [class.text-ibus-yellow]="buscarForm.get('origen')?.value === barrio.id"
               [class.bg-white/5]="buscarForm.get('origen')?.value === barrio.id"
@@ -153,7 +163,7 @@
               </svg>
             </div>
             <div *ngIf="barriosFiltradosOrigen.length === 0" class="px-4 py-2.5 text-white/40 text-sm font-inter text-center">
-              No se encontraron barrios
+              {{ t('noBarrios') }}
             </div>
           </div>
         </div>
@@ -161,13 +171,13 @@
         <!-- Destination Selector -->
         <div class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-20 pointer-events-none">
-            Punto Destino
+            {{ t('puntoDestino') }}
           </label>
           <div class="flex items-center justify-between border border-white/40 hover:border-white/60 rounded-lg h-[50px] relative z-10 transition-all bg-ibus-blue px-3.5 cursor-pointer"
             [class.border-ibus-yellow]="dropdownDestinoAbierto">
             <div class="flex items-center gap-2.5 overflow-hidden w-full">
-              <div class="flex justify-center items-center text-ibus-yellow flex-shrink-0">
-                <div class="w-2.5 h-2.5 bg-ibus-yellow rounded-sm"></div>
+              <div class="flex justify-center items-center text-red-500 flex-shrink-0">
+                <div class="w-2.5 h-2.5 bg-red-500 rounded-sm"></div>
               </div>
               <input type="text"
                 [(ngModel)]="destinoSearch"
@@ -175,7 +185,7 @@
                 (focus)="onDestinoFocus($event)"
                 (input)="onDestinoInput($event)"
                 (click)="$event.stopPropagation(); onDestinoFocus($event)"
-                placeholder="Selecciona Punto Destino"
+                [placeholder]="t('seleccionaDestino')"
                 class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             </div>
             <!-- Chevron Down Icon -->
@@ -186,9 +196,11 @@
 
           <!-- Custom Dropdown List -->
           <div *ngIf="dropdownDestinoAbierto"
-            class="absolute top-[55px] left-0 w-full bg-[#0d2746] border border-white/10 rounded-lg shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/20">
+            class="absolute top-[55px] left-0 w-full bg-[#0d2746] border border-white/10 rounded-lg shadow-2xl z-50 max-h-[220px] overflow-y-auto py-1 custom-scrollbar">
             <div *ngFor="let barrio of barriosFiltradosDestino"
               (click)="seleccionarDestino(barrio, $event)"
+              [class.opacity-40]="barrio.usado === false"
+              [class.pointer-events-none]="barrio.usado === false"
               class="px-4 py-2.5 hover:bg-white/10 text-white/90 text-sm font-inter cursor-pointer transition-all flex justify-between items-center border-b border-white/5 last:border-b-0"
               [class.text-ibus-yellow]="buscarForm.get('destino')?.value === barrio.id"
               [class.bg-white/5]="buscarForm.get('destino')?.value === barrio.id"
@@ -199,7 +211,7 @@
               </svg>
             </div>
             <div *ngIf="barriosFiltradosDestino.length === 0" class="px-4 py-2.5 text-white/40 text-sm font-inter text-center">
-              No se encontraron barrios
+              {{ t('noBarrios') }}
             </div>
           </div>
         </div>
@@ -218,12 +230,12 @@
       <svg class="w-16 h-16 text-white/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
       </svg>
-      <h3 class="font-inter font-bold text-ibus-yellow text-base mb-1">Calcula tu ruta óptima</h3>
-      <p class="text-xs text-white/40 max-w-[280px]">Selecciona barrios de origen y destino arriba para ver las rutas de transporte público que te conectan.</p>
+      <h3 class="font-inter font-bold text-ibus-yellow text-base mb-1">{{ t('calculaRuta') }}</h3>
+      <p class="text-xs text-white/40 max-w-[280px]">{{ t('descCalculaRuta') }}</p>
     </div>
 
     <!-- Results (Desktop) -->
-    <div *ngIf="mostrarDetalleRuta && !cargando" class="flex-1 overflow-y-auto p-6 pb-24">
+    <div *ngIf="mostrarDetalleRuta && !cargando" class="flex-1 overflow-y-auto p-6 pb-24 custom-scrollbar">
       <!-- Error State -->
       <div *ngIf="mensajeError" class="flex flex-col items-center justify-center p-6 text-center bg-white/5 rounded-xl border border-white/10">
         <div class="w-12 h-12 bg-red-950/40 rounded-full flex items-center justify-center text-ibus-yellow mb-3 border border-red-500/20">
@@ -231,69 +243,83 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h3 class="font-inter font-bold text-white text-base mb-1">Sin Conexión</h3>
+        <h3 class="font-inter font-bold text-white text-base mb-1">{{ t('sinConexion') }}</h3>
         <p class="text-xs text-white/60 leading-relaxed">{{ mensajeError }}</p>
       </div>
 
       <!-- Route Details -->
       <div *ngIf="rutaCalculada" class="w-full">
-        <!-- Title and bus icon -->
-        <div class="flex justify-between items-start mb-6">
-          <div class="flex flex-col">
-            <div class="flex items-center gap-2">
-              <h2 class="font-inter font-bold text-[18px] text-white leading-tight">Ruta Encontrada</h2>
-              <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter">Simulado</span>
+        <!-- Grid for Details and Cards (Desktop) -->
+        <div class="grid grid-cols-2 gap-3.5 mb-6">
+          <!-- Left column: Title & Tiempo -->
+          <div class="flex flex-col justify-between">
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="font-inter font-bold text-[17px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
+                <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter">{{ t('simulado') }}</span>
+              </div>
+              <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
             </div>
-            <span class="font-inter text-[12px] text-white/60 mt-1">Conexión de barrios calculada</span>
-            <span class="font-inter text-[11px] text-white/45">{{ rutaCalculada.total_tramos }} transbordo(s) necesario(s)</span>
+            
+            <!-- Tiempo Box -->
+            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center mt-3 h-[115px]">
+              <div class="text-ibus-yellow mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
+              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+            </div>
           </div>
-          <div class="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
-            <svg width="30" height="30" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g fill="#F9B233">
-                <path d="M25,35 C25,32 28,30 32,30 H68 C72,30 75,32 75,35 V62 C75,64 72,66 68,66 H32 C28,66 25,64 25,62 Z" />
-                <rect x="29" y="34" width="42" height="12" fill="white" />
-                <circle cx="34" cy="56" r="3.5" fill="#081E37" />
-                <circle cx="66" cy="56" r="3.5" fill="#081E37" />
-                <rect x="42" y="54" width="16" height="4" rx="1" fill="white" />
-              </g>
-            </svg>
-          </div>
-        </div>
 
-        <!-- Info Columns (Tiempo, Costo, Frecuencia) -->
-        <div class="grid grid-cols-3 gap-2 w-full mb-6">
-          <div class="bg-white/5 rounded-xl p-2.5 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <!-- Right column: Empresas & Costo -->
+          <div class="flex flex-col gap-3.5">
+            <!-- Empresas Box -->
+            <div class="bg-white/5 border border-white/15 rounded-xl p-3 shadow-lg flex flex-col gap-2 min-h-[90px]">
+              <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
+              <div class="flex flex-col gap-2.5">
+                <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex items-center gap-2">
+                  <!-- Bus SVG with company color -->
+                  <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
+                    <defs>
+                      <mask [attr.id]="'bus-mask-' + idx">
+                        <rect x="0" y="0" width="24" height="24" fill="white" />
+                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                      </mask>
+                    </defs>
+                    <g [attr.mask]="'url(#bus-mask-' + idx + ')'">
+                      <rect x="3" y="3" width="18" height="17" rx="4" />
+                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                    </g>
+                  </svg>
+                  <span class="text-xs font-black text-white tracking-wide truncate max-w-[100px]" [title]="emp.nombre">
+                    {{ emp.nombre }}
+                  </span>
+                </div>
+              </div>
             </div>
-            <span class="font-inter text-[9px] text-white/40 font-bold uppercase tracking-wider">Tiempo</span>
-            <span class="font-inter font-bold text-[12px] text-white mt-0.5">{{ (rutaCalculada.total_tramos + 1) * 12 }} min</span>
-          </div>
-          <div class="bg-white/5 rounded-xl p-2.5 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
+
+            <!-- Costo Box -->
+            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+              <div class="text-ibus-yellow mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
+              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
             </div>
-            <span class="font-inter text-[9px] text-white/40 font-bold uppercase tracking-wider">Costo</span>
-            <span class="font-inter font-bold text-[12px] text-white mt-0.5">${{ rutaCalculada.total_tramos > 1 ? '4.800' : '2.400' }}</span>
-          </div>
-          <div class="bg-white/5 rounded-xl p-2.5 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17" />
-              </svg>
-            </div>
-            <span class="font-inter text-[9px] text-white/40 font-bold uppercase tracking-wider">Frecuencia</span>
-            <span class="font-inter font-bold text-[12px] text-white mt-0.5">10 min</span>
           </div>
         </div>
 
         <!-- ELEGANT CARD-BASED VERTICAL TIMELINE -->
         <div class="border-t border-white/10 pt-5">
-          <h3 class="font-inter font-bold text-ibus-yellow text-[13px] mb-4">Instrucciones del viaje</h3>
+          <h3 class="font-inter font-bold text-ibus-yellow text-[13px] mb-4">{{ t('instrucciones') }}</h3>
           <div class="space-y-4">
             
             <div *ngFor="let tramo of rutaCalculada.camino; let i = index; let last = last" class="relative pl-8">
@@ -320,7 +346,7 @@
                 <div class="flex flex-col">
                   <span class="text-[9px] font-bold tracking-wider uppercase"
                     [ngClass]="i === 0 ? 'text-ibus-yellow' : (last ? 'text-red-400' : 'text-white/40')">
-                    {{ i === 0 ? 'Origen' : (last ? 'Destino' : 'Parada intermedia') }}
+                    {{ i === 0 ? t('origenLabel') : (last ? t('destinoLabel') : t('paradaIntermedia')) }}
                   </span>
                   <span class="font-inter font-bold text-[13px] text-white mt-0.5">{{ tramo.nombre_barrio }}</span>
                 </div>
@@ -328,11 +354,25 @@
 
               <!-- Bus connection indicator -->
               <div *ngIf="!last && rutaCalculada.camino[i+1]?.nombre_ruta" class="my-3 flex items-center">
-                <div class="bg-ibus-yellow/10 text-ibus-yellow border border-ibus-yellow/20 px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 3a2 2 0 00-2 2v7a2 2 0 002 2h1v2a1 1 0 002 0v-2h6v2a1 1 0 002 0v-2h1a2 2 0 002-2V5a2 2 0 00-2-2H4zm2 2h8v2H6V5zm0 4h3v2H6V9zm8 2v-2h-3v2h3z" />
+                <div class="px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                     [ngStyle]="obtenerEstiloConexion(rutaCalculada.camino[i+1].nombre_ruta)">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <defs>
+                      <mask [attr.id]="'bus-mask-step-' + i">
+                        <rect x="0" y="0" width="24" height="24" fill="white" />
+                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                      </mask>
+                    </defs>
+                    <g [attr.mask]="'url(#bus-mask-step-' + i + ')'">
+                      <rect x="3" y="3" width="18" height="17" rx="4" />
+                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                    </g>
                   </svg>
-                  <span>Aborda la ruta: <strong class="font-bold">{{ rutaCalculada.camino[i+1].nombre_ruta }}</strong></span>
+                  <span>{{ t('abordaRuta') }} <strong class="font-bold">{{ rutaCalculada.camino[i+1].nombre_ruta }}</strong></span>
                 </div>
               </div>
 
@@ -349,20 +389,20 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
-        <span class="font-inter text-[10px] font-bold">Perfil</span>
+        <span class="font-inter text-[10px] font-bold">{{ t('perfil') }}</span>
       </a>
       <a routerLink="/usuario/buscar-rutas" class="flex flex-col items-center gap-1 text-ibus-yellow transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-        <span class="font-inter text-[10px] font-bold">Mapa</span>
+        <span class="font-inter text-[10px] font-bold">{{ t('mapa') }}</span>
       </a>
       <a routerLink="/usuario/ajustes" class="flex flex-col items-center gap-1 text-white/60 hover:text-ibus-yellow transition-colors cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <circle cx="12" cy="12" r="3" />
         </svg>
-        <span class="font-inter text-[10px] font-bold">Ajustes</span>
+        <span class="font-inter text-[10px] font-bold">{{ t('ajustes') }}</span>
       </a>
     </div>
 
@@ -375,12 +415,37 @@
     <div id="map" class="w-full h-full"></div>
   </div>
 
-  <!-- Re-center Button -->
-  <button (click)="centrarEnOrigen()" class="absolute bottom-[96px] right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-ibus-light-blue hover:text-ibus-yellow active:scale-95 transition-all z-10 md:bottom-6">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-9 4h3m12 0h3m-9-9v3m0 12v3" />
-    </svg>
-  </button>
+  <!-- Floating Map Controls (Zoom & Re-center) -->
+  <div class="absolute bottom-[100px] right-4 flex flex-col gap-2.5 z-10 md:bottom-6">
+    <!-- Zoom Controls Group -->
+    <div class="flex flex-col bg-white/80 dark:bg-[#0A2C51]/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 dark:border-white/10 overflow-hidden">
+      <!-- Zoom In Button -->
+      <button (click)="zoomIn()" 
+              class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50/50 dark:hover:bg-white/5 active:scale-95 transition-all border-b border-gray-100 dark:border-white/10"
+              title="Acercar">
+        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+      <!-- Zoom Out Button -->
+      <button (click)="zoomOut()" 
+              class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50/50 dark:hover:bg-white/5 active:scale-95 transition-all"
+              title="Alejar">
+        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Re-center Button -->
+    <button (click)="centrarEnOrigen()" 
+            class="w-10 h-10 md:w-12 md:h-12 bg-white/80 dark:bg-[#0A2C51]/80 backdrop-blur-md rounded-full shadow-xl border border-gray-200/50 dark:border-white/10 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow active:scale-95 transition-all"
+            title="Enfocar ruta / Centrar">
+      <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-9 4h3m12 0h3m-9-9v3m0 12v3" />
+      </svg>
+    </button>
+  </div>
 
   <!-- ========================================== -->
   <!-- MOBILE: SLIDE UP DETAILS SHEET             -->
@@ -394,7 +459,7 @@
     </div>
 
     <!-- Sheet Content (Mobile) -->
-    <div class="px-6 pb-10 w-full max-w-[480px] mx-auto overflow-y-auto max-h-[70vh]">
+    <div class="px-6 pb-10 w-full max-w-[480px] mx-auto overflow-y-auto max-h-[70vh] custom-scrollbar">
       
       <!-- Mobile Loading -->
       <div *ngIf="cargando" class="flex flex-col items-center justify-center py-8 text-center">
@@ -409,69 +474,85 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h3 class="font-inter font-bold text-white text-base mb-1">Sin Conexión</h3>
+        <h3 class="font-inter font-bold text-white text-base mb-1">{{ t('sinConexion') }}</h3>
         <p class="text-sm text-white/60 leading-relaxed">{{ mensajeError }}</p>
       </div>
 
       <!-- Mobile Success Details -->
       <div *ngIf="mostrarDetalleRuta && !cargando && rutaCalculada">
-        <!-- Title & Transbordo info -->
-        <div class="flex justify-between items-center mb-6">
-          <div class="flex flex-col">
-            <div class="flex items-center gap-2">
-              <h2 class="font-inter font-bold text-[20px] text-white leading-tight">Ruta Encontrada</h2>
-              <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter font-semibold">Simulado</span>
+        <!-- Grid for Details and Cards (Mobile) -->
+        <div class="grid grid-cols-2 gap-3.5 mb-6">
+          <!-- Left column: Title & Tiempo -->
+          <div class="flex flex-col justify-between">
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="font-inter font-bold text-[18px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
+                <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter font-semibold">{{ t('simulado') }}</span>
+              </div>
+              <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
             </div>
-            <span class="font-inter text-[13px] text-white/60 mt-1">Conexión de barrios</span>
-            <span class="font-inter text-[12px] text-white/40">{{ rutaCalculada.total_tramos }} transbordo(s) necesario(s)</span>
+            
+            <!-- Tiempo Box -->
+            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center mt-3 h-[115px]">
+              <div class="text-ibus-yellow mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
+              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+            </div>
           </div>
-          <div class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
-            <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g fill="#F9B233">
-                <path d="M25,35 C25,32 28,30 32,30 H68 C72,30 75,32 75,35 V62 C75,64 72,66 68,66 H32 C28,66 25,64 25,62 Z" />
-                <rect x="29" y="34" width="42" height="12" fill="white" />
-                <circle cx="34" cy="56" r="3.5" fill="#081E37" />
-                <circle cx="66" cy="56" r="3.5" fill="#081E37" />
-                <rect x="42" y="54" width="16" height="4" rx="1" fill="white" />
-              </g>
-            </svg>
-          </div>
-        </div>
 
-        <!-- Info Columns -->
-        <div class="grid grid-cols-3 gap-3 w-full mb-6">
-          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <!-- Right column: Empresas & Costo -->
+          <div class="flex flex-col gap-3.5">
+            <!-- Empresas Box -->
+            <div class="bg-white/5 border border-white/15 rounded-xl p-3 shadow-lg flex flex-col gap-2 min-h-[90px]">
+              <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
+              <div class="flex flex-col gap-2.5">
+                <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex items-center gap-1.5">
+                  <!-- Bus SVG with company color -->
+                  <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
+                    <defs>
+                      <mask [attr.id]="'bus-mask-mob-' + idx">
+                        <rect x="0" y="0" width="24" height="24" fill="white" />
+                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                      </mask>
+                    </defs>
+                    <g [attr.mask]="'url(#bus-mask-mob-' + idx + ')'">
+                      <rect x="3" y="3" width="18" height="17" rx="4" />
+                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                    </g>
+                  </svg>
+                  <!-- Company Name on the right side of the icon -->
+                  <span class="text-xs font-black text-white tracking-wide truncate max-w-[80px]" [title]="emp.nombre">
+                    {{ emp.nombre }}
+                  </span>
+                </div>
+              </div>
             </div>
-            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">Tiempo</span>
-            <span class="font-inter font-bold text-[14px] text-white mt-0.5">{{ (rutaCalculada.total_tramos + 1) * 12 }} min</span>
-          </div>
-          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
+
+            <!-- Costo Box -->
+            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+              <div class="text-ibus-yellow mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+              </div>
+              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
+              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
             </div>
-            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">Costo</span>
-            <span class="font-inter font-bold text-[14px] text-white mt-0.5">${{ rutaCalculada.total_tramos > 1 ? '4.800' : '2.400' }}</span>
-          </div>
-          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center">
-            <div class="text-ibus-yellow mb-1">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17" />
-              </svg>
-            </div>
-            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">Frecuencia</span>
-            <span class="font-inter font-bold text-[14px] text-white mt-0.5">10 min</span>
           </div>
         </div>
 
         <!-- ELEGANT CARD-BASED VERTICAL TIMELINE (MOBILE) -->
+        <!-- ELEGANT CARD-BASED VERTICAL TIMELINE -->
         <div class="border-t border-white/10 pt-6">
-          <h3 class="font-inter font-bold text-ibus-yellow text-[15px] mb-4">Instrucciones del viaje</h3>
+          <h3 class="font-inter font-bold text-ibus-yellow text-[15px] mb-4">{{ t('instrucciones') }}</h3>
           <div class="space-y-4">
             
             <div *ngFor="let tramo of rutaCalculada.camino; let i = index; let last = last" class="relative pl-8">
@@ -495,7 +576,7 @@
                 <div class="flex flex-col">
                   <span class="text-[10px] font-bold tracking-wider uppercase"
                     [ngClass]="i === 0 ? 'text-ibus-yellow' : (last ? 'text-red-400' : 'text-white/40')">
-                    {{ i === 0 ? 'Origen' : (last ? 'Destino' : 'Parada intermedia') }}
+                    {{ i === 0 ? t('origenLabel') : (last ? t('destinoLabel') : t('paradaIntermedia')) }}
                   </span>
                   <span class="font-inter font-bold text-[14px] text-white mt-0.5">{{ tramo.nombre_barrio }}</span>
                 </div>
@@ -503,11 +584,25 @@
 
               <!-- Bus connection indicator -->
               <div *ngIf="!last && rutaCalculada.camino[i+1]?.nombre_ruta" class="my-3 flex items-center">
-                <div class="bg-ibus-yellow/10 text-ibus-yellow border border-ibus-yellow/20 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm">
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 3a2 2 0 00-2 2v7a2 2 0 002 2h1v2a1 1 0 002 0v-2h6v2a1 1 0 002 0v-2h1a2 2 0 002-2V5a2 2 0 00-2-2H4zm2 2h8v2H6V5zm0 4h3v2H6V9zm8 2v-2h-3v2h3z" />
+                <div class="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                     [ngStyle]="obtenerEstiloConexion(rutaCalculada.camino[i+1].nombre_ruta)">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <defs>
+                      <mask [attr.id]="'bus-mask-step-mob-' + i">
+                        <rect x="0" y="0" width="24" height="24" fill="white" />
+                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                      </mask>
+                    </defs>
+                    <g [attr.mask]="'url(#bus-mask-step-mob-' + i + ')'">
+                      <rect x="3" y="3" width="18" height="17" rx="4" />
+                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                    </g>
                   </svg>
-                  <span>Aborda la ruta: <strong class="font-bold">{{ rutaCalculada.camino[i+1].nombre_ruta }}</strong></span>
+                  <span>{{ t('abordaRuta') }} <strong class="font-bold">{{ rutaCalculada.camino[i+1].nombre_ruta }}</strong></span>
                 </div>
               </div>
 
@@ -522,28 +617,29 @@
   <!-- ========================================== -->
   <!-- MOBILE: BOTTOM FLOATING NAVIGATION BAR     -->
   <!-- ========================================== -->
-  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-white rounded-2xl shadow-xl px-8 py-3 z-10 flex justify-between items-center md:hidden">
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-white dark:bg-[#0A2C51] border border-transparent dark:border-white/10 rounded-2xl shadow-xl px-8 py-3 z-10 flex justify-between items-center md:hidden">
     <!-- Perfil Link -->
-    <a routerLink="/auth/perfil" class="flex flex-col items-center gap-1 text-gray-400 hover:text-ibus-light-blue transition-colors cursor-pointer">
+    <a routerLink="/auth/perfil" class="flex flex-col items-center gap-1 text-gray-400 dark:text-white/60 hover:text-ibus-light-blue dark:hover:text-ibus-yellow transition-colors cursor-pointer">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
-      <span class="font-inter text-[11px] font-bold">Perfil</span>
+      <span class="font-inter text-[11px] font-bold">{{ t('perfil') }}</span>
     </a>
     <!-- Mapa Link (Active) -->
-    <a routerLink="/usuario/buscar-rutas" class="flex flex-col items-center gap-1 text-ibus-light-blue transition-colors cursor-pointer">
+    <a routerLink="/usuario/buscar-rutas" class="flex flex-col items-center gap-1 text-ibus-light-blue dark:text-ibus-yellow transition-colors cursor-pointer">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
       </svg>
-      <span class="font-inter text-[11px] font-bold">Mapa</span>
+      <span class="font-inter text-[11px] font-bold">{{ t('mapa') }}</span>
     </a>
     <!-- Ajustes Link -->
-    <a routerLink="/usuario/ajustes" class="flex flex-col items-center gap-1 text-gray-400 hover:text-ibus-light-blue transition-colors cursor-pointer">
+    <a routerLink="/usuario/ajustes" class="flex flex-col items-center gap-1 text-gray-400 dark:text-white/60 hover:text-ibus-light-blue dark:hover:text-ibus-yellow transition-colors cursor-pointer">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31(2.37-2.37.996.608 2.296.07 2.572-1.065)z" />
+        <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
-      <span class="font-inter text-[11px] font-bold">Ajustes</span>
+      <span class="font-inter text-[11px] font-bold">{{ t('ajustes') }}</span>
     </a>
   </div>
 

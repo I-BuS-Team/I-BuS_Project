@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, HostListener, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -42,6 +42,7 @@ export class BuscarRutas implements OnInit, AfterViewInit {
   mensajeError = '';
   cargando = false;
   modoOffline = false;
+  tiempoEstimado = 0;
 
   dropdownOrigenAbierto = false;
   dropdownDestinoAbierto = false;
@@ -52,12 +53,73 @@ export class BuscarRutas implements OnInit, AfterViewInit {
   routingControl: any = null;
   tileLayer: any = null;
 
+  idioma = 'es';
+
+  translations: { [key: string]: { [key: string]: string } } = {
+    es: {
+      puntoOrigen: 'Punto Origen',
+      puntoDestino: 'Punto Destino',
+      seleccionaOrigen: 'Selecciona Punto Origen',
+      seleccionaDestino: 'Selecciona Punto Destino',
+      noBarrios: 'No se encontraron barrios',
+      calculaRuta: 'Calcula tu ruta óptima',
+      descCalculaRuta: 'Selecciona barrios de origen y destino arriba para ver las rutas de transporte público que te conectan.',
+      sinConexion: 'Sin Conexión',
+      rutaEncontrada: 'Ruta Encontrada',
+      simulado: 'Simulado',
+      transbordosNec: 'transbordo(s) necesario(s)',
+      empresas: 'Empresas',
+      tiempo: 'Tiempo',
+      costo: 'Costo',
+      instrucciones: 'Instrucciones del viaje',
+      origenLabel: 'Origen',
+      destinoLabel: 'Destino',
+      paradaIntermedia: 'Parada intermedia',
+      abordaRuta: 'Aborda la ruta:',
+      perfil: 'Perfil',
+      mapa: 'Mapa',
+      ajustes: 'Ajustes',
+      verDetallesRuta: 'Ver Detalles de Ruta'
+    },
+    en: {
+      puntoOrigen: 'Origin Point',
+      puntoDestino: 'Destination Point',
+      seleccionaOrigen: 'Select Origin Point',
+      seleccionaDestino: 'Select Destination Point',
+      noBarrios: 'No neighborhoods found',
+      calculaRuta: 'Calculate your optimal route',
+      descCalculaRuta: 'Select origin and destination neighborhoods above to view public transport routes connecting you.',
+      sinConexion: 'No Connection',
+      rutaEncontrada: 'Route Found',
+      simulado: 'Simulated',
+      transbordosNec: 'transfer(s) required',
+      empresas: 'Companies',
+      tiempo: 'Time',
+      costo: 'Cost',
+      instrucciones: 'Trip instructions',
+      origenLabel: 'Origin',
+      destinoLabel: 'Destination',
+      paradaIntermedia: 'Intermediate stop',
+      abordaRuta: 'Board route:',
+      perfil: 'Profile',
+      mapa: 'Map',
+      ajustes: 'Settings',
+      verDetallesRuta: 'View Route Details'
+    }
+  };
+
+  t(key: string): string {
+    return this.translations[this.idioma]?.[key] || key;
+  }
+
   constructor(
     private fb: FormBuilder,
-    private barriosService: BarriosService
+    private barriosService: BarriosService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.idioma = localStorage.getItem('idioma') || 'es';
     this.buscarForm = this.fb.group({
       origen: ['', Validators.required],
       destino: ['', Validators.required],
@@ -82,6 +144,7 @@ export class BuscarRutas implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.trazarRutaPersistida();
   }
 
   initMap(): void {
@@ -89,7 +152,7 @@ export class BuscarRutas implements OnInit, AfterViewInit {
     const sogamosoCentro: L.LatLngExpression = [5.715, -72.933];
     
     this.map = L.map('map', {
-      zoomControl: true
+      zoomControl: false
     }).setView(sogamosoCentro, 14);
 
     this.actualizarMapaCapas();
@@ -200,10 +263,12 @@ export class BuscarRutas implements OnInit, AfterViewInit {
         } else {
           this.cargarFallbackBarrios();
         }
+        this.restaurarEstadoBusqueda();
       },
       error: (err) => {
         console.warn('Error al cargar barrios del backend. Usando fallback local:', err);
         this.cargarFallbackBarrios();
+        this.restaurarEstadoBusqueda();
       }
     });
   }
@@ -224,12 +289,16 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       this.mensajeError = 'El origen y el destino no pueden ser el mismo barrio.';
       this.rutaCalculada = null;
       this.mostrarDetalleRuta = true;
+      this.guardarEstado();
+      this.cdr.detectChanges();
       return;
     }
 
     this.cargando = true;
     this.mensajeError = '';
     this.rutaCalculada = null;
+    this.tiempoEstimado = 0;
+    this.cdr.detectChanges();
 
     this.barriosService.calcularRuta(Number(origen), Number(destino)).subscribe({
       next: (response) => {
@@ -237,6 +306,8 @@ export class BuscarRutas implements OnInit, AfterViewInit {
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = false;
+        this.guardarEstado();
+        this.cdr.detectChanges();
         if (response && response.camino) {
           setTimeout(() => {
             this.trazarRutaReal(response.camino);
@@ -249,11 +320,52 @@ export class BuscarRutas implements OnInit, AfterViewInit {
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = true;
+        this.guardarEstado();
+        this.cdr.detectChanges();
         setTimeout(() => {
           this.trazarRutaReal(this.rutaCalculada!.camino);
         }, 100);
       }
     });
+  }
+
+  guardarEstado(): void {
+    const { origen, destino } = this.buscarForm.value;
+    this.barriosService.guardarEstadoBusqueda(
+      origen ? Number(origen) : null,
+      destino ? Number(destino) : null,
+      this.rutaCalculada,
+      this.mostrarDetalleRuta,
+      this.modoOffline,
+      this.tiempoEstimado
+    );
+  }
+
+  restaurarEstadoBusqueda(): void {
+    const estado = this.barriosService.obtenerEstadoBusqueda();
+    if (estado && estado.origenId && estado.destinoId) {
+      this.buscarForm.patchValue({
+        origen: estado.origenId,
+        destino: estado.destinoId
+      });
+      this.origenSearch = this.getNombreBarrio(estado.origenId);
+      this.destinoSearch = this.getNombreBarrio(estado.destinoId);
+      this.rutaCalculada = estado.rutaCalculada;
+      this.mostrarDetalleRuta = estado.mostrarDetalleRuta;
+      this.modoOffline = estado.modoOffline;
+      this.tiempoEstimado = estado.tiempoEstimado;
+
+      this.cdr.detectChanges();
+      this.trazarRutaPersistida();
+    }
+  }
+
+  trazarRutaPersistida(): void {
+    if (this.map && this.rutaCalculada && this.rutaCalculada.camino) {
+      setTimeout(() => {
+        this.trazarRutaReal(this.rutaCalculada!.camino);
+      }, 300);
+    }
   }
 
   trazarRutaReal(camino: TramoRuta[]): void {
@@ -273,12 +385,6 @@ export class BuscarRutas implements OnInit, AfterViewInit {
     }
 
     const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
-    const outerStyle = isDark 
-      ? { color: '#F9B233', opacity: 0.9, weight: 8 } 
-      : { color: '#0A2C51', opacity: 0.8, weight: 8 };
-    const innerStyle = isDark 
-      ? { color: '#FFFFFF', opacity: 1.0, weight: 4 } 
-      : { color: '#F9B233', opacity: 1.0, weight: 4 };
 
     // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
     this.routingControl = (L as any).Routing.control({
@@ -286,11 +392,35 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       router: (L as any).Routing.osrmv1({
         serviceUrl: 'https://router.project-osrm.org/route/v1'
       }),
-      lineOptions: {
-        styles: [
-          outerStyle,
-          innerStyle
-        ]
+      routeLine: (route: any, options: any) => {
+        const features: L.Layer[] = [];
+        const waypointIndices = route.waypointIndices;
+        const coordinates = route.coordinates;
+
+        if (!waypointIndices || waypointIndices.length < 2) {
+          const style = this.getRouteStyle(null, isDark);
+          features.push(L.polyline(coordinates, style.outer));
+          features.push(L.polyline(coordinates, style.inner));
+          return L.featureGroup(features);
+        }
+
+        for (let i = 0; i < waypointIndices.length - 1; i++) {
+          const startIndex = waypointIndices[i];
+          const endIndex = waypointIndices[i + 1];
+          const legCoords = coordinates.slice(startIndex, endIndex + 1);
+
+          // Get the route taken for this leg from the camino array
+          // leg i is from waypoint i to waypoint i+1
+          // in camino array, the route info is at camino[i + 1]
+          const tramo = camino[i + 1];
+          const nombreRuta = tramo?.nombre_ruta ?? null;
+
+          const style = this.getRouteStyle(nombreRuta, isDark);
+          features.push(L.polyline(legCoords, style.outer));
+          features.push(L.polyline(legCoords, style.inner));
+        }
+
+        return L.featureGroup(features);
       },
       show: false,
       routeWhileDragging: false,
@@ -320,7 +450,71 @@ export class BuscarRutas implements OnInit, AfterViewInit {
           })
         }).bindPopup(label);
       }
-    }).addTo(this.map);
+    });
+
+    this.routingControl.on('routesfound', (e: any) => {
+      if (e.routes && e.routes.length > 0) {
+        const totalTimeSeconds = e.routes[0].summary.totalTime;
+        const idealMinutes = totalTimeSeconds / 60;
+        const busesCount = this.obtenerCantidadBuses(camino);
+        this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.routingControl.addTo(this.map);
+  }
+
+  getRouteStyle(nombreRuta: string | null, isDark: boolean): { outer: any, inner: any } {
+    let company = '';
+    if (nombreRuta) {
+      const lower = nombreRuta.toLowerCase();
+      if (lower.includes('transavella')) {
+        company = 'transavella';
+      } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+        company = 'cootradelsol';
+      } else if (lower.includes('translago')) {
+        company = 'translago';
+      } else if (lower.includes('sugamuxi')) {
+        company = 'sugamuxi';
+      }
+    }
+
+    let coreColor = '';
+    let borderColor = '';
+
+    if (company === 'transavella') {
+      coreColor = '#EF4444'; // Rojo
+      borderColor = '#7F1D1D'; // Rojo oscuro
+    } else if (company === 'cootradelsol') {
+      if (isDark) {
+        coreColor = '#E2E8F0'; // Gris tirando a blanco
+        borderColor = '#64748B'; // Gris oscuro
+      } else {
+        coreColor = '#7E8B9B'; // Gris más clarito
+        borderColor = '#475569'; // Gris oscuro
+      }
+    } else if (company === 'translago') {
+      coreColor = '#3B82F6'; // Azul
+      borderColor = '#1E3A8A'; // Azul oscuro
+    } else if (company === 'sugamuxi') {
+      coreColor = '#00E676'; // Verde más vivo
+      borderColor = '#004D40'; // Verde oscuro
+    } else {
+      // Default / Fallback
+      if (isDark) {
+        coreColor = '#FFFFFF';
+        borderColor = '#F9B233';
+      } else {
+        coreColor = '#F9B233';
+        borderColor = '#0A2C51';
+      }
+    }
+
+    return {
+      outer: { color: borderColor, opacity: 0.9, weight: 8 },
+      inner: { color: coreColor, opacity: 1.0, weight: 4 }
+    };
   }
 
   generateMockRoute(origenId: number, destinoId: number): RutaCalcularResponse {
@@ -383,17 +577,145 @@ export class BuscarRutas implements OnInit, AfterViewInit {
     return barrio ? barrio.nombre : `Barrio ${id}`;
   }
 
+  obtenerTiempoEstimado(): string {
+    if (this.tiempoEstimado > 0) {
+      return `${this.tiempoEstimado} min`;
+    }
+    if (this.rutaCalculada) {
+      const busesCount = this.obtenerCantidadBuses(this.rutaCalculada.camino);
+      const idealMinutes = (this.rutaCalculada.total_tramos + 1) * 7;
+      return `${Math.round((idealMinutes * 1.8) + (busesCount * 5))} min`;
+    }
+    return '15 min';
+  }
+
+  obtenerCantidadBuses(camino: TramoRuta[]): number {
+    let count = 0;
+    let lastRutaId: number | null | undefined = undefined;
+    for (let i = 1; i < camino.length; i++) {
+      const rutaId = camino[i].ruta_id;
+      if (rutaId && rutaId !== lastRutaId) {
+        count++;
+        lastRutaId = rutaId;
+      }
+    }
+    return count > 0 ? count : 1;
+  }
+
+  obtenerCostoTotal(camino: TramoRuta[]): string {
+    const cantidad = this.obtenerCantidadBuses(camino);
+    const total = cantidad * 2600;
+    return `$${total.toLocaleString('es-CO')}`;
+  }
+
+  obtenerEmpresasRuta(camino: TramoRuta[]): { nombre: string, color: string }[] {
+    const empresas: { [key: string]: { nombre: string, color: string } } = {};
+    for (let i = 1; i < camino.length; i++) {
+      const nombreRuta = camino[i].nombre_ruta;
+      if (nombreRuta) {
+        let nombreEmpresa = 'Bus';
+        let color = '#F9B233'; // Default yellow
+        
+        const lower = nombreRuta.toLowerCase();
+        if (lower.includes('transavella')) {
+          nombreEmpresa = 'Transavella';
+          color = '#EF4444'; // Rojo (originally was #000000)
+        } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+          nombreEmpresa = 'Cootradelsol';
+          color = '#E2E8F0'; // Gris tirando a blanco
+        } else if (lower.includes('translago')) {
+          nombreEmpresa = 'Translago';
+          color = '#38BDF8'; // Azul claro
+        } else if (lower.includes('sugamuxi')) {
+          nombreEmpresa = 'Flota Sugamuxi';
+          color = '#00E676'; // Verde más vivo
+        } else {
+          const parts = nombreRuta.split('(');
+          nombreEmpresa = parts[0].trim();
+        }
+        
+        if (!empresas[nombreEmpresa]) {
+          empresas[nombreEmpresa] = { nombre: nombreEmpresa, color: color };
+        }
+      }
+    }
+    
+    const result = Object.values(empresas);
+    return result.length > 0 ? result : [{ nombre: 'Bus', color: '#F9B233' }];
+  }
+
+  obtenerEstiloConexion(nombreRuta: string | null | undefined): { [key: string]: string } {
+    const isDark = this.isDark();
+    if (!nombreRuta) {
+      return {
+        'background-color': 'rgba(249, 178, 51, 0.1)',
+        'color': '#F9B233',
+        'border': '1px solid rgba(249, 178, 51, 0.2)'
+      };
+    }
+    const lower = nombreRuta.toLowerCase();
+    let bg = 'rgba(249, 178, 51, 0.1)';
+    let text = '#F9B233';
+    let border = 'rgba(249, 178, 51, 0.2)';
+
+    if (lower.includes('transavella')) {
+      bg = isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.08)';
+      text = '#EF4444';
+      border = 'rgba(239, 68, 68, 0.2)';
+    } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+      if (isDark) {
+        bg = 'rgba(226, 232, 240, 0.1)';
+        text = '#E2E8F0';
+        border = 'rgba(226, 232, 240, 0.2)';
+      } else {
+        bg = 'rgba(71, 85, 105, 0.08)';
+        text = '#475569'; // Gris legible en modo claro
+        border = 'rgba(71, 85, 105, 0.2)';
+      }
+    } else if (lower.includes('translago')) {
+      bg = isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(2, 132, 199, 0.08)';
+      text = isDark ? '#38BDF8' : '#0284C7';
+      border = isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(2, 132, 199, 0.2)';
+    } else if (lower.includes('sugamuxi')) {
+      bg = isDark ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0, 200, 83, 0.08)';
+      text = isDark ? '#00E676' : '#00C853';
+      border = isDark ? 'rgba(0, 230, 118, 0.2)' : 'rgba(0, 200, 83, 0.2)';
+    }
+
+    return {
+      'background-color': bg,
+      'color': text,
+      'border': `1px solid ${border}`
+    };
+  }
+
+  isDark(): boolean {
+    return document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  }
+
   cerrarDetalle(): void {
     this.mostrarDetalleRuta = false;
-    this.rutaCalculada = null;
-    this.mensajeError = '';
-    if (this.routingControl) {
-      this.map.removeControl(this.routingControl);
-      this.routingControl = null;
-    }
+    this.guardarEstado();
+    this.cdr.detectChanges();
   }
 
   centrarEnOrigen(): void {
+    if (this.rutaCalculada && this.rutaCalculada.camino && this.rutaCalculada.camino.length > 0) {
+      const validCoords = this.rutaCalculada.camino
+        .filter(t => t.latitud !== 0.0 && t.longitud !== 0.0)
+        .map(t => L.latLng(t.latitud, t.longitud));
+      
+      if (validCoords.length > 0) {
+        const bounds = L.latLngBounds(validCoords);
+        this.map.fitBounds(bounds, {
+          padding: [50, 50],
+          animate: true,
+          duration: 1.0
+        });
+        return;
+      }
+    }
+
     const origenId = this.buscarForm.get('origen')?.value;
     if (origenId) {
       const origenBarrio = this.barrios.find(b => b.id === Number(origenId));
@@ -402,6 +724,47 @@ export class BuscarRutas implements OnInit, AfterViewInit {
           animate: true,
           duration: 1.0
         });
+        return;
+      }
+    }
+
+    // Default Fallback
+    this.map.setView([5.715, -72.933], 14, {
+      animate: true,
+      duration: 1.0
+    });
+  }
+
+  zoomIn(): void {
+    if (this.map) {
+      this.map.zoomIn();
+    }
+  }
+
+  zoomOut(): void {
+    if (this.map) {
+      this.map.zoomOut();
+    }
+  }
+
+  private touchStartY = 0;
+
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(event: TouchEvent): void {
+    if (window.innerWidth < 768) {
+      this.touchStartY = event.touches[0].clientY;
+    }
+  }
+
+  @HostListener('touchend', ['$event'])
+  onTouchEnd(event: TouchEvent): void {
+    if (window.innerWidth < 768 && this.rutaCalculada && !this.mostrarDetalleRuta) {
+      const touchEndY = event.changedTouches[0].clientY;
+      const diffY = this.touchStartY - touchEndY;
+      if (diffY > 50) { // Deslizar hacia arriba al menos 50px
+        this.mostrarDetalleRuta = true;
+        this.guardarEstado();
+        this.cdr.detectChanges();
       }
     }
   }

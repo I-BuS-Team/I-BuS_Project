@@ -23,8 +23,14 @@ def calcular_ruta_optima(db: Session, origen_id: int, destino_id: int) -> RutaCa
     # Modelar el Grafo
     # Conectamos barrios secuencialmente según su orden físico en la ruta
     grafo = defaultdict(list)
+    # Cargar todos los RutaBarrio en una sola consulta para evitar N+1 queries
+    rutas_barrios_db = db.query(RutaBarrioDB).order_by(RutaBarrioDB.orden.asc()).all()
+    rutas_barrios_map = defaultdict(list)
+    for rb in rutas_barrios_db:
+        rutas_barrios_map[rb.idRuta].append(rb)
+
     for ruta in rutas_db:
-        barrios_ruta = db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == ruta.idRuta).order_by(RutaBarrioDB.orden.asc()).all()
+        barrios_ruta = rutas_barrios_map[ruta.idRuta]
         barrio_ids = [br.idBarrio for br in barrios_ruta]
         
         sequence = []

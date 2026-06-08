@@ -59,7 +59,7 @@
                         <path
                             d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    <span>Mis Favoritos</span>
+                    <span>{{ t('misFavoritos') }}</span>
                 </div>
 
                 <!-- Favorites list -->
@@ -107,7 +107,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Historial de Búsqueda</span>
+                    <span>{{ t('historialBusqueda') }}</span>
                 </div>
 
                 <!-- Search History list -->
@@ -148,13 +148,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span>Cerrar Sesión</span>
+                <span>{{ t('cerrarSesion') }}</span>
             </button>
 
             <!-- Eliminar Cuenta Link -->
             <button (click)="onEliminarCuenta()"
                 class="font-inter text-[13px] text-white/50 hover:text-ibus-red hover:underline transition-colors mt-2">
-                Eliminar Cuenta
+                {{ t('eliminarCuenta') }}
             </button>
         </div>
     </div>
@@ -168,18 +168,18 @@
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <h3 class="text-white font-bold text-center text-lg mb-2">¿Eliminar Cuenta?</h3>
+            <h3 class="text-white font-bold text-center text-lg mb-2">{{ t('confirmarEliminarTitulo') }}</h3>
             <p class="text-white/70 text-center text-sm mb-6 leading-relaxed">
-                ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.
+                {{ t('confirmarEliminarDesc') }}
             </p>
             <div class="flex gap-3 w-full">
                 <button (click)="cancelarEliminarCuenta()"
                     class="flex-1 py-2.5 rounded-xl border border-white/20 text-white font-bold text-sm hover:bg-white/5 transition-all">
-                    Cancelar
+                    {{ t('cancelar') }}
                 </button>
                 <button (click)="confirmarEliminarCuenta()"
                     class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-all shadow-md active:scale-95">
-                    Sí, eliminar
+                    {{ t('siEliminar') }}
                 </button>
             </div>
         </div>
@@ -193,13 +193,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <h3 class="text-white font-bold text-center text-lg mb-2">Solicitud Recibida</h3>
+            <h3 class="text-white font-bold text-center text-lg mb-2">{{ t('solicitudRecibida') }}</h3>
             <p class="text-white/70 text-center text-sm mb-6 leading-relaxed">
                 {{ mensajeAlerta }}
             </p>
             <button (click)="cerrarModalAlerta()"
                 class="w-full py-2.5 rounded-xl bg-ibus-yellow text-ibus-blue font-bold text-sm hover:bg-opacity-90 transition-all shadow-md active:scale-95">
-                Entendido
+                {{ t('entendido') }}
             </button>
         </div>
     </div>
