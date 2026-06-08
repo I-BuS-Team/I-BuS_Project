@@ -11,7 +11,7 @@ import { AuthService } from '../auth.service';
   imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class PerfilComponent implements OnInit {
-  nombreUsuario = 'Usuario';
+  nombreUsuario = '';
   emailUsuario = '';
 
   idioma = 'es';

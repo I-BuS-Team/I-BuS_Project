@@ -14,6 +14,16 @@ export class AuthService {
 
   constructor(private barriosService: BarriosService) {
     this.supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    
+    // Restaurar sesión offline si existe en localStorage
+    const savedOffline = localStorage.getItem('modoOffline');
+    if (savedOffline === 'true') {
+      this.modoOffline = true;
+      const savedUser = localStorage.getItem('userSimulado');
+      if (savedUser) {
+        this.userSimulado = JSON.parse(savedUser);
+      }
+    }
   }
 
   isOfflineMode(): boolean {
@@ -67,6 +77,8 @@ export class AuthService {
               email: 'admin@ibus.com',
               user_metadata: { nombre: 'Administrador', idTipoUsuario: 1 }
             };
+            localStorage.setItem('modoOffline', 'true');
+            localStorage.setItem('userSimulado', JSON.stringify(this.userSimulado));
             return of({ user: this.userSimulado });
           }
           return throwError(() => err);
@@ -75,13 +87,17 @@ export class AuthService {
         // Si es cualquier otro error de red, timeout o servidor, permitimos login local de demostración
         this.modoOffline = true;
         const isAdmin = credentials.email === 'admin@ibus.com' || credentials.email.includes('admin');
+        const emailPrefix = credentials.email.split('@')[0];
+        const capitalizedPrefix = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
         this.userSimulado = {
           email: credentials.email,
           user_metadata: {
-            nombre: isAdmin ? 'Administrador' : 'Usuario General',
+            nombre: isAdmin ? 'Administrador' : capitalizedPrefix,
             idTipoUsuario: isAdmin ? 1 : 2
           }
         };
+        localStorage.setItem('modoOffline', 'true');
+        localStorage.setItem('userSimulado', JSON.stringify(this.userSimulado));
         return of({ user: this.userSimulado });
       })
     );
@@ -144,6 +160,8 @@ export class AuthService {
             idTipoUsuario: isAdmin ? 1 : 2
           }
         };
+        localStorage.setItem('modoOffline', 'true');
+        localStorage.setItem('userSimulado', JSON.stringify(this.userSimulado));
         return of({ user: this.userSimulado });
       })
     );
@@ -151,6 +169,8 @@ export class AuthService {
 
   logout(): Observable<any> {
     this.barriosService.limpiarEstadoBusqueda();
+    localStorage.removeItem('modoOffline');
+    localStorage.removeItem('userSimulado');
     if (this.modoOffline) {
       this.userSimulado = null;
       this.modoOffline = false;
@@ -177,17 +197,17 @@ export class AuthService {
     }
     return defer(() => from(this.supabase.auth.getUser())).pipe(
       map(response => {
-        if (response.error) {
-          throw response.error;
+        if (response.error || !response.data.user) {
+          throw response.error || new Error('No user session');
         }
         return response.data.user;
       }),
       catchError(() => {
         // Fallback local
-        return of(this.userSimulado || {
-          email: 'usuario@ibus.com',
-          user_metadata: { nombre: 'Usuario General', idTipoUsuario: 2 }
-        });
+        if (this.modoOffline && this.userSimulado) {
+          return of(this.userSimulado);
+        }
+        return of(null);
       })
     );
   }
@@ -218,6 +238,8 @@ export class AuthService {
 
   deleteAccount(): Observable<any> {
     this.barriosService.limpiarEstadoBusqueda();
+    localStorage.removeItem('modoOffline');
+    localStorage.removeItem('userSimulado');
     this.userSimulado = null;
     this.modoOffline = false;
     return defer(() => from(this.supabase.auth.signOut())).pipe(
