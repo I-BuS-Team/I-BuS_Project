@@ -38,3 +38,94 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.4);
 }
+
+/* Accessibility - High Contrast Mode overrides */
+body.high-contrast {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.high-contrast select,
+body.high-contrast input,
+body.high-contrast button,
+body.high-contrast a {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: #ffff00 !important; /* Bright yellow for interactives */
+  border: 2px solid #ffffff !important;
+  outline: none !important;
+}
+
+body.high-contrast select option {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.high-contrast .bg-ibus-blue,
+body.high-contrast .bg-ibus-light-blue,
+body.high-contrast .bg-white\/5,
+body.high-contrast .bg-white\/10,
+body.high-contrast .bg-white\/15,
+body.high-contrast .bg-white\/20,
+body.high-contrast .bg-white {
+  background-color: #000000 !important;
+  background: #000000 !important;
+}
+
+body.high-contrast .border,
+body.high-contrast .border-white\/10,
+body.high-contrast .border-white\/20,
+body.high-contrast .border-white\/30,
+body.high-contrast .border-white\/40,
+body.high-contrast .border-white\/25 {
+  border-color: #ffffff !important;
+}
+
+body.high-contrast .text-ibus-yellow,
+body.high-contrast .text-white\/40,
+body.high-contrast .text-white\/60,
+body.high-contrast .text-white\/80,
+body.high-contrast .text-white\/90 {
+  color: #ffffff !important;
+}
+
+body.high-contrast svg {
+  color: #ffffff !important;
+}
+
+body.high-contrast svg path {
+  stroke: #ffffff !important;
+}
+
+body.high-contrast #map,
+body.high-contrast .leaflet-container {
+  filter: grayscale(100%) contrast(200%) !important;
+}
+
+/* Dynamic Font Size overrides for Tailwind absolute pixel utility classes */
+:root {
+  --font-scale: 1.0;
+}
+
+.text-\[11px\] { font-size: calc(11px * var(--font-scale)) !important; }
+.text-\[12px\] { font-size: calc(12px * var(--font-scale)) !important; }
+.text-\[13px\] { font-size: calc(13px * var(--font-scale)) !important; }
+.text-\[14px\] { font-size: calc(14px * var(--font-scale)) !important; }
+.text-\[15px\] { font-size: calc(15px * var(--font-scale)) !important; }
+.text-\[16px\] { font-size: calc(16px * var(--font-scale)) !important; }
+.text-\[18px\] { font-size: calc(18px * var(--font-scale)) !important; }
+.text-\[20px\] { font-size: calc(20px * var(--font-scale)) !important; }
+.text-\[22px\] { font-size: calc(22px * var(--font-scale)) !important; }
+.text-\[26px\] { font-size: calc(26px * var(--font-scale)) !important; }
+.text-\[28px\] { font-size: calc(28px * var(--font-scale)) !important; }
+.text-\[30px\] { font-size: calc(30px * var(--font-scale)) !important; }
+.text-\[32px\] { font-size: calc(32px * var(--font-scale)) !important; }
+.text-\[38px\] { font-size: calc(38px * var(--font-scale)) !important; }
+.text-\[44px\] { font-size: calc(44px * var(--font-scale)) !important; }
+
+/* Contrast filter boost in light mode for map visibility */
+body:not(.dark) #map {
+  filter: contrast(1.06) saturate(1.15) brightness(0.96) !important;
+}
+

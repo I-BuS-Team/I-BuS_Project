@@ -50,6 +50,7 @@ export class BuscarRutas implements OnInit, AfterViewInit {
 
   map!: L.Map;
   routingControl: any = null;
+  tileLayer: any = null;
 
   constructor(
     private fb: FormBuilder,
@@ -91,7 +92,20 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       zoomControl: true
     }).setView(sogamosoCentro, 14);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    this.actualizarMapaCapas();
+  }
+
+  actualizarMapaCapas(): void {
+    if (this.tileLayer) {
+      this.map.removeLayer(this.tileLayer);
+    }
+
+    const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+    const tileUrl = isDark 
+      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    this.tileLayer = L.tileLayer(tileUrl, {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors, © CartoDB'
     }).addTo(this.map);
@@ -258,6 +272,14 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       return;
     }
 
+    const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+    const outerStyle = isDark 
+      ? { color: '#F9B233', opacity: 0.9, weight: 8 } 
+      : { color: '#0A2C51', opacity: 0.8, weight: 8 };
+    const innerStyle = isDark 
+      ? { color: '#FFFFFF', opacity: 1.0, weight: 4 } 
+      : { color: '#F9B233', opacity: 1.0, weight: 4 };
+
     // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
     this.routingControl = (L as any).Routing.control({
       waypoints: waypoints,
@@ -266,8 +288,8 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       }),
       lineOptions: {
         styles: [
-          { color: '#0A2C51', opacity: 0.8, weight: 8 }, // Línea exterior oscura
-          { color: '#F9B233', opacity: 1.0, weight: 4 }  // Línea interior amarilla
+          outerStyle,
+          innerStyle
         ]
       },
       show: false,
