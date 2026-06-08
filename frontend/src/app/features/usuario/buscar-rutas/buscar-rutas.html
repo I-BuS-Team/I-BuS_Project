@@ -250,70 +250,66 @@
       <!-- Route Details -->
       <div *ngIf="rutaCalculada" class="w-full">
         <!-- Grid for Details and Cards (Desktop) -->
-        <div class="grid grid-cols-2 gap-3.5 mb-6">
-          <!-- Left column: Title & Tiempo -->
-          <div class="flex flex-col justify-between">
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="font-inter font-bold text-[17px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
-                <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter">{{ t('simulado') }}</span>
-              </div>
-              <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
-            </div>
-            
-            <!-- Tiempo Box -->
-            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center mt-3 h-[115px]">
-              <div class="text-ibus-yellow mb-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
-              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+        <!-- Title & Transbordo Info (Desktop) -->
+        <div class="flex flex-col mb-3.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="font-inter font-bold text-[17px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
+            <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter">{{ t('simulado') }}</span>
+          </div>
+          <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
+        </div>
+
+        <!-- Empresas Box (Spans Full Width, Horizontally Grouped) (Desktop) -->
+        <div class="bg-white/5 border border-white/15 rounded-xl p-3.5 shadow-lg flex flex-col gap-2.5 mb-3.5 w-full">
+          <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
+          <div class="flex flex-row flex-wrap gap-5 justify-start items-center">
+            <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex flex-col items-center text-center gap-1 min-w-[70px]">
+              <!-- Bus SVG with company color -->
+              <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
+                <defs>
+                  <mask [attr.id]="'bus-mask-' + idx">
+                    <rect x="0" y="0" width="24" height="24" fill="white" />
+                    <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                    <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                    <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                    <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                  </mask>
+                </defs>
+                <g [attr.mask]="'url(#bus-mask-' + idx + ')'">
+                  <rect x="3" y="3" width="18" height="17" rx="4" />
+                  <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                  <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                </g>
+              </svg>
+              <span class="text-[11px] font-black text-white tracking-wide truncate max-w-[95px]" [title]="emp.nombre">
+                {{ emp.nombre }}
+              </span>
             </div>
           </div>
+        </div>
 
-          <!-- Right column: Empresas & Costo -->
-          <div class="flex flex-col gap-3.5">
-            <!-- Empresas Box -->
-            <div class="bg-white/5 border border-white/15 rounded-xl p-3 shadow-lg flex flex-col gap-2 min-h-[90px]">
-              <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
-              <div class="flex flex-col gap-2.5">
-                <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex items-center gap-2">
-                  <!-- Bus SVG with company color -->
-                  <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
-                    <defs>
-                      <mask [attr.id]="'bus-mask-' + idx">
-                        <rect x="0" y="0" width="24" height="24" fill="white" />
-                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
-                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
-                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
-                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
-                      </mask>
-                    </defs>
-                    <g [attr.mask]="'url(#bus-mask-' + idx + ')'">
-                      <rect x="3" y="3" width="18" height="17" rx="4" />
-                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
-                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
-                    </g>
-                  </svg>
-                  <span class="text-xs font-black text-white tracking-wide truncate max-w-[100px]" [title]="emp.nombre">
-                    {{ emp.nombre }}
-                  </span>
-                </div>
-              </div>
+        <!-- Grid for Tiempo and Costo (Same Dimensions) (Desktop) -->
+        <div class="grid grid-cols-2 gap-3.5 mb-6">
+          <!-- Tiempo Box -->
+          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+            <div class="text-ibus-yellow mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
+            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
+            <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+          </div>
 
-            <!-- Costo Box -->
-            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
-              <div class="text-ibus-yellow mb-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
-              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
+          <!-- Costo Box -->
+          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+            <div class="text-ibus-yellow mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
             </div>
+            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
+            <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
           </div>
         </div>
 
@@ -417,34 +413,34 @@
 
   <!-- Floating Map Controls (Zoom & Re-center) -->
   <div class="absolute bottom-[100px] right-4 flex flex-col gap-2.5 z-10 md:bottom-6">
+    <!-- Re-center Button (Floating Circle) - Now ABOVE zoom controls -->
+    <button (click)="centrarEnOrigen()" 
+            class="w-8 h-8 md:w-9 md:h-9 bg-white dark:bg-[#0A2C51] rounded-full shadow-xl border border-gray-200/50 dark:border-white/10 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow active:scale-95 transition-all"
+            title="Enfocar ruta / Centrar">
+      <svg class="w-4 h-4 md:w-4.5 md:h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-9 4h3m12 0h3m-9-9v3m0 12v3" />
+      </svg>
+    </button>
+
     <!-- Zoom Controls Group -->
-    <div class="flex flex-col bg-white/80 dark:bg-[#0A2C51]/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 dark:border-white/10 overflow-hidden">
+    <div class="flex flex-col bg-white dark:bg-[#0A2C51] rounded-xl shadow-xl border border-gray-200/50 dark:border-white/10 overflow-hidden">
       <!-- Zoom In Button -->
       <button (click)="zoomIn()" 
-              class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50/50 dark:hover:bg-white/5 active:scale-95 transition-all border-b border-gray-100 dark:border-white/10"
+              class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all border-b border-gray-100 dark:border-white/10"
               title="Acercar">
-        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 md:w-4.5 md:h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
       </button>
       <!-- Zoom Out Button -->
       <button (click)="zoomOut()" 
-              class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50/50 dark:hover:bg-white/5 active:scale-95 transition-all"
+              class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all"
               title="Alejar">
-        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 md:w-4.5 md:h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
         </svg>
       </button>
     </div>
-
-    <!-- Re-center Button -->
-    <button (click)="centrarEnOrigen()" 
-            class="w-10 h-10 md:w-12 md:h-12 bg-white/80 dark:bg-[#0A2C51]/80 backdrop-blur-md rounded-full shadow-xl border border-gray-200/50 dark:border-white/10 flex items-center justify-center text-ibus-light-blue dark:text-white/80 hover:text-ibus-yellow dark:hover:text-ibus-yellow active:scale-95 transition-all"
-            title="Enfocar ruta / Centrar">
-      <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-9 4h3m12 0h3m-9-9v3m0 12v3" />
-      </svg>
-    </button>
   </div>
 
   <!-- ========================================== -->
@@ -480,72 +476,66 @@
 
       <!-- Mobile Success Details -->
       <div *ngIf="mostrarDetalleRuta && !cargando && rutaCalculada">
-        <!-- Grid for Details and Cards (Mobile) -->
-        <div class="grid grid-cols-2 gap-3.5 mb-6">
-          <!-- Left column: Title & Tiempo -->
-          <div class="flex flex-col justify-between">
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="font-inter font-bold text-[18px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
-                <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter font-semibold">{{ t('simulado') }}</span>
-              </div>
-              <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
-            </div>
-            
-            <!-- Tiempo Box -->
-            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center mt-3 h-[115px]">
-              <div class="text-ibus-yellow mb-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
-              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+        <!-- Title & Transbordo Info (Mobile) -->
+        <div class="flex flex-col mb-3.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="font-inter font-bold text-[18px] text-white leading-tight">{{ t('rutaEncontrada') }}</h2>
+            <span *ngIf="modoOffline" class="text-[9px] bg-white/10 border border-white/20 text-white/60 px-2 py-0.5 rounded-full font-inter font-semibold">{{ t('simulado') }}</span>
+          </div>
+          <span class="font-inter text-[11px] text-white/45 mt-1.5 leading-snug">{{ rutaCalculada.total_tramos }} {{ t('transbordosNec') }}</span>
+        </div>
+
+        <!-- Empresas Box (Spans Full Width, Horizontally Grouped) (Mobile) -->
+        <div class="bg-white/5 border border-white/15 rounded-xl p-3.5 shadow-lg flex flex-col gap-2.5 mb-3.5 w-full">
+          <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
+          <div class="flex flex-row flex-wrap gap-5 justify-start items-center">
+            <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex flex-col items-center text-center gap-1 min-w-[70px]">
+              <!-- Bus SVG with company color -->
+              <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
+                <defs>
+                  <mask [attr.id]="'bus-mask-mob-' + idx">
+                    <rect x="0" y="0" width="24" height="24" fill="white" />
+                    <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
+                    <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
+                    <circle cx="6.5" cy="16" r="1.3" fill="black" />
+                    <circle cx="17.5" cy="16" r="1.3" fill="black" />
+                  </mask>
+                </defs>
+                <g [attr.mask]="'url(#bus-mask-mob-' + idx + ')'">
+                  <rect x="3" y="3" width="18" height="17" rx="4" />
+                  <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
+                  <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
+                </g>
+              </svg>
+              <span class="text-[11px] font-black text-white tracking-wide truncate max-w-[75px]" [title]="emp.nombre">
+                {{ emp.nombre }}
+              </span>
             </div>
           </div>
+        </div>
 
-          <!-- Right column: Empresas & Costo -->
-          <div class="flex flex-col gap-3.5">
-            <!-- Empresas Box -->
-            <div class="bg-white/5 border border-white/15 rounded-xl p-3 shadow-lg flex flex-col gap-2 min-h-[90px]">
-              <span class="text-[10px] text-white/40 uppercase font-bold tracking-wider leading-none">{{ t('empresas') }}</span>
-              <div class="flex flex-col gap-2.5">
-                <div *ngFor="let emp of obtenerEmpresasRuta(rutaCalculada.camino); let idx = index" class="flex items-center gap-1.5">
-                  <!-- Bus SVG with company color -->
-                  <svg class="w-8 h-8 flex-shrink-0" [attr.fill]="emp.color" viewBox="0 0 24 24">
-                    <defs>
-                      <mask [attr.id]="'bus-mask-mob-' + idx">
-                        <rect x="0" y="0" width="24" height="24" fill="white" />
-                        <rect x="5" y="8" width="14" height="5.5" rx="1.5" fill="black" />
-                        <rect x="8.5" y="5" width="7" height="1.2" rx="0.6" fill="black" />
-                        <circle cx="6.5" cy="16" r="1.3" fill="black" />
-                        <circle cx="17.5" cy="16" r="1.3" fill="black" />
-                      </mask>
-                    </defs>
-                    <g [attr.mask]="'url(#bus-mask-mob-' + idx + ')'">
-                      <rect x="3" y="3" width="18" height="17" rx="4" />
-                      <rect x="5.5" y="20" width="3" height="2.5" rx="1.2" />
-                      <rect x="15.5" y="20" width="3" height="2.5" rx="1.2" />
-                    </g>
-                  </svg>
-                  <!-- Company Name on the right side of the icon -->
-                  <span class="text-xs font-black text-white tracking-wide truncate max-w-[80px]" [title]="emp.nombre">
-                    {{ emp.nombre }}
-                  </span>
-                </div>
-              </div>
+        <!-- Grid for Tiempo and Costo (Same Dimensions) (Mobile) -->
+        <div class="grid grid-cols-2 gap-3.5 mb-6">
+          <!-- Tiempo Box -->
+          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+            <div class="text-ibus-yellow mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
+            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('tiempo') }}</span>
+            <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerTiempoEstimado() }}</span>
+          </div>
 
-            <!-- Costo Box -->
-            <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
-              <div class="text-ibus-yellow mb-1">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
-              <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
+          <!-- Costo Box -->
+          <div class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col items-center justify-center h-[90px]">
+            <div class="text-ibus-yellow mb-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
             </div>
+            <span class="font-inter text-[10px] text-white/40 font-bold uppercase tracking-wider">{{ t('costo') }}</span>
+            <span class="font-inter font-bold text-[14px] text-white mt-1">{{ obtenerCostoTotal(rutaCalculada.camino) }}</span>
           </div>
         </div>
 
@@ -612,6 +602,20 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MOBILE: REOPEN DETAILS BUTTON              -->
+  <!-- ========================================== -->
+  <div *ngIf="!mostrarDetalleRuta && !cargando && rutaCalculada" 
+       class="absolute bottom-[100px] left-0 z-10 md:hidden animate-slide-in-left">
+    <button (click)="mostrarDetalleRuta = true; guardarEstado()"
+            class="w-7 h-9 bg-ibus-yellow text-ibus-blue rounded-r-xl shadow-xl flex items-center justify-center pr-1 border-y border-r border-ibus-yellow/30 active:scale-95 transition-all"
+            [title]="t('verDetallesRuta')">
+      <svg class="w-5 h-5 text-ibus-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 16v-4m0-4h.01" />
+      </svg>
+    </button>
   </div>
 
   <!-- ========================================== -->

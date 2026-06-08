@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
 
@@ -22,7 +22,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit(): void {
@@ -30,6 +31,13 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
+    });
+
+    this.route.queryParams.subscribe(params => {
+      if (params['expired'] === 'true') {
+        this.mensajeError = 'Su sesión ha expirado por inactividad. Inicie sesión nuevamente.';
+        this.cdr.detectChanges();
+      }
     });
 
     // Limpiar errores cuando el usuario modifica los campos

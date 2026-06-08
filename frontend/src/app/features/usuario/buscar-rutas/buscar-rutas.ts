@@ -429,7 +429,7 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       .then(data => {
         if (!data.routes || data.routes.length === 0) {
           // Fallback: línea recta entre waypoints
-          this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup);
+          this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup, markers);
           return;
         }
 
@@ -471,15 +471,17 @@ export class BuscarRutas implements OnInit, AfterViewInit {
           layers.push(L.polyline(segCoords, style.inner));
         }
 
+        // Quitar el grupo de marcadores previo y reemplazar ordenadamente
+        if (markerGroup) {
+          markerGroup.remove();
+        }
         const routeGroup = L.featureGroup([...layers, ...markers]).addTo(this.map);
-        // Quitar el grupo de marcadores previo y reemplazar
-        markerGroup.remove();
         this.routingControl = routeGroup as any;
         this.map.fitBounds(routeGroup.getBounds(), { padding: [50, 50], animate: true });
       })
       .catch(() => {
         // Si OSRM falla (sin internet, error), dibujamos líneas rectas de fallback
-        this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup);
+        this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup, markers);
       });
 
     // Guardar el grupo de marcadores como control temporal hasta que llegue la respuesta
@@ -490,7 +492,8 @@ export class BuscarRutas implements OnInit, AfterViewInit {
     waypoints: L.LatLng[],
     camino: TramoRuta[],
     isDark: boolean,
-    markerGroup?: L.FeatureGroup
+    markerGroup?: L.FeatureGroup,
+    markers?: L.Layer[]
   ): void {
     const layers: L.Layer[] = [];
     for (let i = 0; i < waypoints.length - 1; i++) {
@@ -502,7 +505,8 @@ export class BuscarRutas implements OnInit, AfterViewInit {
     if (markerGroup) {
       markerGroup.remove();
     }
-    const group = L.featureGroup(layers).addTo(this.map);
+    const groupLayers = markers ? [...layers, ...markers] : layers;
+    const group = L.featureGroup(groupLayers).addTo(this.map);
     this.routingControl = group as any;
     this.map.fitBounds(L.latLngBounds(waypoints), { padding: [50, 50] });
   }

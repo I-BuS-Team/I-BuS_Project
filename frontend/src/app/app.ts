@@ -1,5 +1,7 @@
-import { Component, signal, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal, OnInit, HostListener, OnDestroy } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { AuthService } from './features/auth/auth.service';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -7,8 +9,17 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   protected readonly title = signal('frontend');
+  
+  private lastActivity: number = Date.now();
+  private checkIntervalSub?: Subscription;
+  private readonly TIMEOUT_MS = 20 * 60 * 1000; // 20 minutos
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     // Aplicar configuraciones de accesibilidad guardadas al iniciar la app
@@ -36,5 +47,37 @@ export class App implements OnInit {
     
     document.documentElement.style.fontSize = `${scale}rem`;
     document.documentElement.style.setProperty('--font-scale', scale.toString());
+
+    // Iniciar temporizador de inactividad
+    this.checkIntervalSub = interval(30000).subscribe(() => {
+      this.checkInactivity();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.checkIntervalSub?.unsubscribe();
+  }
+
+  @HostListener('document:mousemove')
+  @HostListener('document:click')
+  @HostListener('document:keydown')
+  @HostListener('document:scroll')
+  @HostListener('document:touchstart')
+  resetInactivityTimer(): void {
+    this.lastActivity = Date.now();
+  }
+
+  private checkInactivity(): void {
+    const now = Date.now();
+    if (now - this.lastActivity > this.TIMEOUT_MS) {
+      this.authService.getCurrentUser().subscribe(user => {
+        if (user) {
+          console.warn('Sesión expirada por inactividad.');
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/auth/login'], { queryParams: { expired: 'true' } });
+          });
+        }
+      });
+    }
   }
 }
