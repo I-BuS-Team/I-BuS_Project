@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BarriosService, Barrio, RutaCalcularResponse, TramoRuta } from './services/barrios.service';
 import * as L from 'leaflet';
-import 'leaflet-routing-machine';
+import * as LRM from 'leaflet-routing-machine';
 
 const MOCK_BARRIOS: Barrio[] = [
   { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 },
@@ -370,7 +370,17 @@ export class BuscarRutas implements OnInit, AfterViewInit {
 
   trazarRutaReal(camino: TramoRuta[]): void {
     if (this.routingControl) {
-      this.map.removeControl(this.routingControl);
+      try {
+        if (typeof this.routingControl.remove === 'function') {
+          this.routingControl.remove();
+        } else if (typeof (this.routingControl as any).removeFrom === 'function') {
+          (this.routingControl as any).removeFrom(this.map);
+        } else {
+          this.map.removeControl(this.routingControl);
+        }
+      } catch (e) {
+        try { this.map.removeLayer(this.routingControl as any); } catch (_) {}
+      }
       this.routingControl = null;
     }
 
@@ -386,10 +396,25 @@ export class BuscarRutas implements OnInit, AfterViewInit {
 
     const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
 
+    // Verificar que leaflet-routing-machine esté disponible
+    const Routing = (L as any).Routing || (LRM as any)?.Routing || (LRM as any);
+    if (!Routing || typeof Routing.control !== 'function') {
+      console.warn('leaflet-routing-machine no disponible. Dibujando ruta como polilínea simple.');
+      const style = this.getRouteStyle(null, isDark);
+      const polylineGroup = L.featureGroup([
+        L.polyline(waypoints, style.outer),
+        L.polyline(waypoints, style.inner)
+      ]);
+      polylineGroup.addTo(this.map);
+      this.routingControl = polylineGroup as any;
+      this.map.fitBounds(L.latLngBounds(waypoints), { padding: [50, 50] });
+      return;
+    }
+
     // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
-    this.routingControl = (L as any).Routing.control({
+    this.routingControl = Routing.control({
       waypoints: waypoints,
-      router: (L as any).Routing.osrmv1({
+      router: Routing.osrmv1({
         serviceUrl: 'https://router.project-osrm.org/route/v1'
       }),
       routeLine: (route: any, options: any) => {
@@ -452,17 +477,21 @@ export class BuscarRutas implements OnInit, AfterViewInit {
       }
     });
 
-    this.routingControl.on('routesfound', (e: any) => {
-      if (e.routes && e.routes.length > 0) {
-        const totalTimeSeconds = e.routes[0].summary.totalTime;
-        const idealMinutes = totalTimeSeconds / 60;
-        const busesCount = this.obtenerCantidadBuses(camino);
-        this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
-        this.cdr.detectChanges();
-      }
-    });
+    if (typeof this.routingControl.on === 'function') {
+      this.routingControl.on('routesfound', (e: any) => {
+        if (e.routes && e.routes.length > 0) {
+          const totalTimeSeconds = e.routes[0].summary.totalTime;
+          const idealMinutes = totalTimeSeconds / 60;
+          const busesCount = this.obtenerCantidadBuses(camino);
+          this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
+          this.cdr.detectChanges();
+        }
+      });
+    }
 
-    this.routingControl.addTo(this.map);
+    if (typeof this.routingControl.addTo === 'function') {
+      this.routingControl.addTo(this.map);
+    }
   }
 
   getRouteStyle(nombreRuta: string | null, isDark: boolean): { outer: any, inner: any } {
