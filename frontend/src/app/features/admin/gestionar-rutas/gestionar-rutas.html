@@ -73,7 +73,7 @@
           </button>
 
           <!-- Search results dropdown overlay -->
-          <div *ngIf="showSearchResults && searchResults.length > 0" class="absolute left-0 top-[52px] w-full max-h-[250px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
+          <div *ngIf="showSearchResults && searchResults.length > 0" (click)="$event.stopPropagation()" class="absolute left-0 top-[52px] w-full max-h-[250px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
             <div *ngFor="let r of searchResults" (click)="selectRoute(r)" class="px-4 py-3 hover:bg-white/10 cursor-pointer border-b border-white/10 flex flex-col gap-1 transition-colors">
               <span class="font-roboto font-bold text-[13px] text-ibus-yellow text-left">Ruta ID: {{ r.id }}</span>
               <span class="text-[12px] text-white/90 text-left">Empresa: {{ getEmpresaName(r.idEmpresa) }}</span>
@@ -113,10 +113,10 @@
 
         <!-- Inputs Row 2 (Horario & Frecuencia) -->
         <div class="grid grid-cols-2 gap-4">
-          <!-- Horario (Asociado a la empresa) -->
+          <!-- Horario (Asociado a la ruta) -->
           <div class="relative w-full">
             <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
-              Horario Empresa
+              Horario Ruta
             </label>
             <div class="flex items-center border border-white/20 rounded-lg h-[50px] relative z-0 bg-white/5">
               <input formControlName="horario" type="text"

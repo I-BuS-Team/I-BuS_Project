@@ -60,7 +60,7 @@
           </button>
 
           <!-- Search results dropdown overlay -->
-          <div *ngIf="showSearchResults && searchResults.length > 0" class="absolute left-0 top-[52px] w-full max-h-[200px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
+          <div *ngIf="showSearchResults && searchResults.length > 0" (click)="$event.stopPropagation()" class="absolute left-0 top-[52px] w-full max-h-[200px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
             <div *ngFor="let d of searchResults" (click)="selectDetalle(d)" class="px-4 py-3 hover:bg-white/10 cursor-pointer border-b border-white/10 flex flex-col gap-1 transition-colors">
               <span class="font-roboto font-bold text-[13px] text-ibus-yellow text-left">Detalle ID: {{ d.id }}</span>
               <span class="text-[12px] text-white/90 text-left">{{ getRouteLabelById(d.idRuta) }}</span>

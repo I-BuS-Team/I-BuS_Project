@@ -1,29 +1,31 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BarriosService, Barrio, RutaCalcularResponse, TramoRuta } from './services/barrios.service';
+import * as L from 'leaflet';
+import 'leaflet-routing-machine';
 
 const MOCK_BARRIOS: Barrio[] = [
-  { id: 6, nombre: 'Centro' },
-  { id: 187, nombre: 'UPTC' },
-  { id: 127, nombre: 'El Rosario' },
-  { id: 132, nombre: 'José Antonio Galán' },
-  { id: 137, nombre: 'La Isla' },
-  { id: 149, nombre: 'Magdalena' },
-  { id: 150, nombre: 'Monquirá' },
-  { id: 152, nombre: 'Prado Norte' },
-  { id: 169, nombre: 'Sugamuxi' },
-  { id: 175, nombre: 'Villa del Sol' },
-  { id: 184, nombre: 'La Tolva' },
-  { id: 185, nombre: 'Vallado' },
-  { id: 186, nombre: 'La Ramada' },
-  { id: 188, nombre: 'Libertador' },
-  { id: 189, nombre: 'Coliseo' },
-  { id: 191, nombre: 'Morca' },
-  { id: 192, nombre: 'Puente Pesca' },
-  { id: 198, nombre: 'Plaza de Mercado' },
-  { id: 204, nombre: 'Jardín' }
+  { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 },
+  { id: 187, nombre: 'UPTC', latitud: 5.723, longitud: -72.926 },
+  { id: 127, nombre: 'El Rosario', latitud: 5.718, longitud: -72.939 },
+  { id: 132, nombre: 'José Antonio Galán', latitud: 5.711, longitud: -72.938 },
+  { id: 137, nombre: 'La Isla', latitud: 5.721, longitud: -72.942 },
+  { id: 149, nombre: 'Magdalena', latitud: 5.708, longitud: -72.929 },
+  { id: 150, nombre: 'Monquirá', latitud: 5.728, longitud: -72.919 },
+  { id: 152, nombre: 'Prado Norte', latitud: 5.731, longitud: -72.928 },
+  { id: 169, nombre: 'Sugamuxi', latitud: 5.713, longitud: -72.925 },
+  { id: 175, nombre: 'Villa del Sol', latitud: 5.706, longitud: -72.936 },
+  { id: 184, nombre: 'La Tolva', latitud: 5.742, longitud: -72.921 },
+  { id: 185, nombre: 'Vallado', latitud: 5.717, longitud: -72.928 },
+  { id: 186, nombre: 'La Ramada', latitud: 5.724, longitud: -72.945 },
+  { id: 188, nombre: 'Libertador', latitud: 5.714, longitud: -72.930 },
+  { id: 189, nombre: 'Coliseo', latitud: 5.719, longitud: -72.932 },
+  { id: 191, nombre: 'Morca', latitud: 5.702, longitud: -72.903 },
+  { id: 192, nombre: 'Puente Pesca', latitud: 5.728, longitud: -72.935 },
+  { id: 198, nombre: 'Plaza de Mercado', latitud: 5.712, longitud: -72.934 },
+  { id: 204, nombre: 'Jardín', latitud: 5.720, longitud: -72.923 }
 ];
 
 @Component({
@@ -32,7 +34,7 @@ const MOCK_BARRIOS: Barrio[] = [
   templateUrl: './buscar-rutas.html',
   styleUrl: './buscar-rutas.scss',
 })
-export class BuscarRutas implements OnInit {
+export class BuscarRutas implements OnInit, AfterViewInit {
   buscarForm!: FormGroup;
   mostrarDetalleRuta = false;
   barrios: Barrio[] = [];
@@ -40,18 +42,84 @@ export class BuscarRutas implements OnInit {
   mensajeError = '';
   cargando = false;
   modoOffline = false;
+  tiempoEstimado = 0;
 
   dropdownOrigenAbierto = false;
   dropdownDestinoAbierto = false;
   origenSearch = '';
   destinoSearch = '';
 
+  map!: L.Map;
+  routingControl: any = null;
+  tileLayer: any = null;
+
+  idioma = 'es';
+
+  translations: { [key: string]: { [key: string]: string } } = {
+    es: {
+      puntoOrigen: 'Punto Origen',
+      puntoDestino: 'Punto Destino',
+      seleccionaOrigen: 'Selecciona Punto Origen',
+      seleccionaDestino: 'Selecciona Punto Destino',
+      noBarrios: 'No se encontraron barrios',
+      calculaRuta: 'Calcula tu ruta óptima',
+      descCalculaRuta: 'Selecciona barrios de origen y destino arriba para ver las rutas de transporte público que te conectan.',
+      sinConexion: 'Sin Conexión',
+      rutaEncontrada: 'Ruta Encontrada',
+      simulado: 'Simulado',
+      transbordosNec: 'transbordo(s) necesario(s)',
+      empresas: 'Empresas',
+      tiempo: 'Tiempo',
+      costo: 'Costo',
+      instrucciones: 'Instrucciones del viaje',
+      origenLabel: 'Origen',
+      destinoLabel: 'Destino',
+      paradaIntermedia: 'Parada intermedia',
+      abordaRuta: 'Aborda la ruta:',
+      perfil: 'Perfil',
+      mapa: 'Mapa',
+      ajustes: 'Ajustes',
+      verDetallesRuta: 'Ver Detalles de Ruta'
+    },
+    en: {
+      puntoOrigen: 'Origin Point',
+      puntoDestino: 'Destination Point',
+      seleccionaOrigen: 'Select Origin Point',
+      seleccionaDestino: 'Select Destination Point',
+      noBarrios: 'No neighborhoods found',
+      calculaRuta: 'Calculate your optimal route',
+      descCalculaRuta: 'Select origin and destination neighborhoods above to view public transport routes connecting you.',
+      sinConexion: 'No Connection',
+      rutaEncontrada: 'Route Found',
+      simulado: 'Simulated',
+      transbordosNec: 'transfer(s) required',
+      empresas: 'Companies',
+      tiempo: 'Time',
+      costo: 'Cost',
+      instrucciones: 'Trip instructions',
+      origenLabel: 'Origin',
+      destinoLabel: 'Destination',
+      paradaIntermedia: 'Intermediate stop',
+      abordaRuta: 'Board route:',
+      perfil: 'Profile',
+      mapa: 'Map',
+      ajustes: 'Settings',
+      verDetallesRuta: 'View Route Details'
+    }
+  };
+
+  t(key: string): string {
+    return this.translations[this.idioma]?.[key] || key;
+  }
+
   constructor(
     private fb: FormBuilder,
-    private barriosService: BarriosService
+    private barriosService: BarriosService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.idioma = localStorage.getItem('idioma') || 'es';
     this.buscarForm = this.fb.group({
       origen: ['', Validators.required],
       destino: ['', Validators.required],
@@ -72,6 +140,38 @@ export class BuscarRutas implements OnInit {
     });
 
     this.cargarBarrios();
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+    this.trazarRutaPersistida();
+  }
+
+  initMap(): void {
+    // Coordenadas del centro de Sogamoso
+    const sogamosoCentro: L.LatLngExpression = [5.715, -72.933];
+    
+    this.map = L.map('map', {
+      zoomControl: false
+    }).setView(sogamosoCentro, 14);
+
+    this.actualizarMapaCapas();
+  }
+
+  actualizarMapaCapas(): void {
+    if (this.tileLayer) {
+      this.map.removeLayer(this.tileLayer);
+    }
+
+    const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+    const tileUrl = isDark 
+      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    this.tileLayer = L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors, © CartoDB'
+    }).addTo(this.map);
   }
 
   @HostListener('document:click', ['$event'])
@@ -163,10 +263,12 @@ export class BuscarRutas implements OnInit {
         } else {
           this.cargarFallbackBarrios();
         }
+        this.restaurarEstadoBusqueda();
       },
       error: (err) => {
         console.warn('Error al cargar barrios del backend. Usando fallback local:', err);
         this.cargarFallbackBarrios();
+        this.restaurarEstadoBusqueda();
       }
     });
   }
@@ -187,12 +289,16 @@ export class BuscarRutas implements OnInit {
       this.mensajeError = 'El origen y el destino no pueden ser el mismo barrio.';
       this.rutaCalculada = null;
       this.mostrarDetalleRuta = true;
+      this.guardarEstado();
+      this.cdr.detectChanges();
       return;
     }
 
     this.cargando = true;
     this.mensajeError = '';
     this.rutaCalculada = null;
+    this.tiempoEstimado = 0;
+    this.cdr.detectChanges();
 
     this.barriosService.calcularRuta(Number(origen), Number(destino)).subscribe({
       next: (response) => {
@@ -200,50 +306,265 @@ export class BuscarRutas implements OnInit {
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = false;
+        this.guardarEstado();
+        this.cdr.detectChanges();
+        if (response && response.camino) {
+          setTimeout(() => {
+            this.trazarRutaReal(response.camino);
+          }, 100);
+        }
       },
       error: (err) => {
         console.warn('Error al calcular ruta en backend. Usando simulación local:', err);
-        // Simulamos el resultado localmente si no conecta con el backend o si estamos en offline
         this.rutaCalculada = this.generateMockRoute(Number(origen), Number(destino));
         this.mostrarDetalleRuta = true;
         this.cargando = false;
         this.modoOffline = true;
+        this.guardarEstado();
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.trazarRutaReal(this.rutaCalculada!.camino);
+        }, 100);
       }
     });
   }
 
+  guardarEstado(): void {
+    const { origen, destino } = this.buscarForm.value;
+    this.barriosService.guardarEstadoBusqueda(
+      origen ? Number(origen) : null,
+      destino ? Number(destino) : null,
+      this.rutaCalculada,
+      this.mostrarDetalleRuta,
+      this.modoOffline,
+      this.tiempoEstimado
+    );
+  }
+
+  restaurarEstadoBusqueda(): void {
+    const estado = this.barriosService.obtenerEstadoBusqueda();
+    if (estado && estado.origenId && estado.destinoId) {
+      this.buscarForm.patchValue({
+        origen: estado.origenId,
+        destino: estado.destinoId
+      });
+      this.origenSearch = this.getNombreBarrio(estado.origenId);
+      this.destinoSearch = this.getNombreBarrio(estado.destinoId);
+      this.rutaCalculada = estado.rutaCalculada;
+      this.mostrarDetalleRuta = estado.mostrarDetalleRuta;
+      this.modoOffline = estado.modoOffline;
+      this.tiempoEstimado = estado.tiempoEstimado;
+
+      this.cdr.detectChanges();
+      this.trazarRutaPersistida();
+    }
+  }
+
+  trazarRutaPersistida(): void {
+    if (this.map && this.rutaCalculada && this.rutaCalculada.camino) {
+      setTimeout(() => {
+        this.trazarRutaReal(this.rutaCalculada!.camino);
+      }, 300);
+    }
+  }
+
+  trazarRutaReal(camino: TramoRuta[]): void {
+    if (this.routingControl) {
+      this.map.removeControl(this.routingControl);
+      this.routingControl = null;
+    }
+
+    // Filtrar tramos con coordenadas válidas
+    const waypoints = camino
+      .filter(t => t.latitud !== 0.0 && t.longitud !== 0.0)
+      .map(t => L.latLng(t.latitud, t.longitud));
+
+    if (waypoints.length < 2) {
+      console.warn('No hay suficientes coordenadas válidas para trazar la ruta en el mapa.');
+      return;
+    }
+
+    const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+
+    // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
+    this.routingControl = (L as any).Routing.control({
+      waypoints: waypoints,
+      router: (L as any).Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1'
+      }),
+      routeLine: (route: any, options: any) => {
+        const features: L.Layer[] = [];
+        const waypointIndices = route.waypointIndices;
+        const coordinates = route.coordinates;
+
+        if (!waypointIndices || waypointIndices.length < 2) {
+          const style = this.getRouteStyle(null, isDark);
+          features.push(L.polyline(coordinates, style.outer));
+          features.push(L.polyline(coordinates, style.inner));
+          return L.featureGroup(features);
+        }
+
+        for (let i = 0; i < waypointIndices.length - 1; i++) {
+          const startIndex = waypointIndices[i];
+          const endIndex = waypointIndices[i + 1];
+          const legCoords = coordinates.slice(startIndex, endIndex + 1);
+
+          // Get the route taken for this leg from the camino array
+          // leg i is from waypoint i to waypoint i+1
+          // in camino array, the route info is at camino[i + 1]
+          const tramo = camino[i + 1];
+          const nombreRuta = tramo?.nombre_ruta ?? null;
+
+          const style = this.getRouteStyle(nombreRuta, isDark);
+          features.push(L.polyline(legCoords, style.outer));
+          features.push(L.polyline(legCoords, style.inner));
+        }
+
+        return L.featureGroup(features);
+      },
+      show: false,
+      routeWhileDragging: false,
+      addWaypoints: false, // Desactivar edición manual de paradas
+      draggableWaypoints: false, // Evitar arrastre manual de waypoints
+      showAlternatives: false,
+      fitSelectedRoutes: true,
+      createMarker: (i: number, waypoint: any, n: number) => {
+        const isStart = i === 0;
+        const isEnd = i === n - 1;
+        
+        const iconHtml = isStart 
+          ? `<div style="background-color: #F9B233; color: #0A2C51; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">O</div>`
+          : (isEnd 
+            ? `<div style="background-color: #EF4444; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">D</div>`
+            : `<div style="background-color: #175AA5; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1.5px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.25); font-family: 'Roboto', sans-serif;">${i}</div>`);
+
+        const label = isStart ? 'Origen' : (isEnd ? 'Destino' : `Parada intermedia: ${camino[i].nombre_barrio}`);
+        
+        return L.marker(waypoint.latLng, {
+          draggable: false,
+          icon: L.divIcon({
+            html: iconHtml,
+            className: '',
+            iconSize: isStart || isEnd ? [30, 30] : [22, 22],
+            iconAnchor: isStart || isEnd ? [15, 15] : [11, 11]
+          })
+        }).bindPopup(label);
+      }
+    });
+
+    this.routingControl.on('routesfound', (e: any) => {
+      if (e.routes && e.routes.length > 0) {
+        const totalTimeSeconds = e.routes[0].summary.totalTime;
+        const idealMinutes = totalTimeSeconds / 60;
+        const busesCount = this.obtenerCantidadBuses(camino);
+        this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.routingControl.addTo(this.map);
+  }
+
+  getRouteStyle(nombreRuta: string | null, isDark: boolean): { outer: any, inner: any } {
+    let company = '';
+    if (nombreRuta) {
+      const lower = nombreRuta.toLowerCase();
+      if (lower.includes('transavella')) {
+        company = 'transavella';
+      } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+        company = 'cootradelsol';
+      } else if (lower.includes('translago')) {
+        company = 'translago';
+      } else if (lower.includes('sugamuxi')) {
+        company = 'sugamuxi';
+      }
+    }
+
+    let coreColor = '';
+    let borderColor = '';
+
+    if (company === 'transavella') {
+      coreColor = '#EF4444'; // Rojo
+      borderColor = '#7F1D1D'; // Rojo oscuro
+    } else if (company === 'cootradelsol') {
+      if (isDark) {
+        coreColor = '#E2E8F0'; // Gris tirando a blanco
+        borderColor = '#64748B'; // Gris oscuro
+      } else {
+        coreColor = '#7E8B9B'; // Gris más clarito
+        borderColor = '#475569'; // Gris oscuro
+      }
+    } else if (company === 'translago') {
+      coreColor = '#3B82F6'; // Azul
+      borderColor = '#1E3A8A'; // Azul oscuro
+    } else if (company === 'sugamuxi') {
+      coreColor = '#00E676'; // Verde más vivo
+      borderColor = '#004D40'; // Verde oscuro
+    } else {
+      // Default / Fallback
+      if (isDark) {
+        coreColor = '#FFFFFF';
+        borderColor = '#F9B233';
+      } else {
+        coreColor = '#F9B233';
+        borderColor = '#0A2C51';
+      }
+    }
+
+    return {
+      outer: { color: borderColor, opacity: 0.9, weight: 8 },
+      inner: { color: coreColor, opacity: 1.0, weight: 4 }
+    };
+  }
+
   generateMockRoute(origenId: number, destinoId: number): RutaCalcularResponse {
-    const origenNombre = this.getNombreBarrio(origenId);
-    const destinoNombre = this.getNombreBarrio(destinoId);
-    
-    const centroId = 6;
-    const centroNombre = 'Centro';
-    
+    const origenBarrio = this.barrios.find(b => b.id === origenId);
+    const destinoBarrio = this.barrios.find(b => b.id === destinoId);
+    const centroBarrio = this.barrios.find(b => b.id === 6) || { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 };
+
+    const origenNombre = origenBarrio?.nombre || `Barrio ${origenId}`;
+    const destinoNombre = destinoBarrio?.nombre || `Barrio ${destinoId}`;
+    const centroNombre = centroBarrio.nombre;
+
     const camino: TramoRuta[] = [
-      { barrio_id: origenId, nombre_barrio: origenNombre, ruta_id: null, nombre_ruta: null },
+      {
+        barrio_id: origenId,
+        nombre_barrio: origenNombre,
+        ruta_id: null,
+        nombre_ruta: null,
+        latitud: origenBarrio?.latitud || 5.715,
+        longitud: origenBarrio?.longitud || -72.933
+      },
     ];
-    
-    if (origenId !== centroId && destinoId !== centroId) {
+
+    if (origenId !== 6 && destinoId !== 6) {
       camino.push({
-        barrio_id: centroId,
+        barrio_id: 6,
         nombre_barrio: centroNombre,
         ruta_id: 38,
-        nombre_ruta: 'Cootradelsol (Frecuencia: 5-10 min)'
+        nombre_ruta: 'Cootradelsol (Frecuencia: 5-10 min)',
+        latitud: centroBarrio.latitud || 5.715,
+        longitud: centroBarrio.longitud || -72.933
       });
       camino.push({
         barrio_id: destinoId,
         nombre_barrio: destinoNombre,
         ruta_id: 39,
-        nombre_ruta: 'Flota Sugamuxi (Frecuencia: 10 min)'
+        nombre_ruta: 'Flota Sugamuxi (Frecuencia: 10 min)',
+        latitud: destinoBarrio?.latitud || 5.715,
+        longitud: destinoBarrio?.longitud || -72.933
       });
     } else {
       camino.push({
         barrio_id: destinoId,
         nombre_barrio: destinoNombre,
         ruta_id: 38,
-        nombre_ruta: 'TransAvella S.A. (Frecuencia: 8 min)'
+        nombre_ruta: 'TransAvella S.A. (Frecuencia: 8 min)',
+        latitud: destinoBarrio?.latitud || 5.715,
+        longitud: destinoBarrio?.longitud || -72.933
       });
     }
+
     return {
       total_tramos: camino.length - 1,
       camino: camino
@@ -256,9 +577,195 @@ export class BuscarRutas implements OnInit {
     return barrio ? barrio.nombre : `Barrio ${id}`;
   }
 
+  obtenerTiempoEstimado(): string {
+    if (this.tiempoEstimado > 0) {
+      return `${this.tiempoEstimado} min`;
+    }
+    if (this.rutaCalculada) {
+      const busesCount = this.obtenerCantidadBuses(this.rutaCalculada.camino);
+      const idealMinutes = (this.rutaCalculada.total_tramos + 1) * 7;
+      return `${Math.round((idealMinutes * 1.8) + (busesCount * 5))} min`;
+    }
+    return '15 min';
+  }
+
+  obtenerCantidadBuses(camino: TramoRuta[]): number {
+    let count = 0;
+    let lastRutaId: number | null | undefined = undefined;
+    for (let i = 1; i < camino.length; i++) {
+      const rutaId = camino[i].ruta_id;
+      if (rutaId && rutaId !== lastRutaId) {
+        count++;
+        lastRutaId = rutaId;
+      }
+    }
+    return count > 0 ? count : 1;
+  }
+
+  obtenerCostoTotal(camino: TramoRuta[]): string {
+    const cantidad = this.obtenerCantidadBuses(camino);
+    const total = cantidad * 2600;
+    return `$${total.toLocaleString('es-CO')}`;
+  }
+
+  obtenerEmpresasRuta(camino: TramoRuta[]): { nombre: string, color: string }[] {
+    const empresas: { [key: string]: { nombre: string, color: string } } = {};
+    for (let i = 1; i < camino.length; i++) {
+      const nombreRuta = camino[i].nombre_ruta;
+      if (nombreRuta) {
+        let nombreEmpresa = 'Bus';
+        let color = '#F9B233'; // Default yellow
+        
+        const lower = nombreRuta.toLowerCase();
+        if (lower.includes('transavella')) {
+          nombreEmpresa = 'Transavella';
+          color = '#EF4444'; // Rojo (originally was #000000)
+        } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+          nombreEmpresa = 'Cootradelsol';
+          color = '#E2E8F0'; // Gris tirando a blanco
+        } else if (lower.includes('translago')) {
+          nombreEmpresa = 'Translago';
+          color = '#38BDF8'; // Azul claro
+        } else if (lower.includes('sugamuxi')) {
+          nombreEmpresa = 'Flota Sugamuxi';
+          color = '#00E676'; // Verde más vivo
+        } else {
+          const parts = nombreRuta.split('(');
+          nombreEmpresa = parts[0].trim();
+        }
+        
+        if (!empresas[nombreEmpresa]) {
+          empresas[nombreEmpresa] = { nombre: nombreEmpresa, color: color };
+        }
+      }
+    }
+    
+    const result = Object.values(empresas);
+    return result.length > 0 ? result : [{ nombre: 'Bus', color: '#F9B233' }];
+  }
+
+  obtenerEstiloConexion(nombreRuta: string | null | undefined): { [key: string]: string } {
+    const isDark = this.isDark();
+    if (!nombreRuta) {
+      return {
+        'background-color': 'rgba(249, 178, 51, 0.1)',
+        'color': '#F9B233',
+        'border': '1px solid rgba(249, 178, 51, 0.2)'
+      };
+    }
+    const lower = nombreRuta.toLowerCase();
+    let bg = 'rgba(249, 178, 51, 0.1)';
+    let text = '#F9B233';
+    let border = 'rgba(249, 178, 51, 0.2)';
+
+    if (lower.includes('transavella')) {
+      bg = isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.08)';
+      text = '#EF4444';
+      border = 'rgba(239, 68, 68, 0.2)';
+    } else if (lower.includes('cootradelsol') || lower.includes('cotradelsol')) {
+      if (isDark) {
+        bg = 'rgba(226, 232, 240, 0.1)';
+        text = '#E2E8F0';
+        border = 'rgba(226, 232, 240, 0.2)';
+      } else {
+        bg = 'rgba(71, 85, 105, 0.08)';
+        text = '#475569'; // Gris legible en modo claro
+        border = 'rgba(71, 85, 105, 0.2)';
+      }
+    } else if (lower.includes('translago')) {
+      bg = isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(2, 132, 199, 0.08)';
+      text = isDark ? '#38BDF8' : '#0284C7';
+      border = isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(2, 132, 199, 0.2)';
+    } else if (lower.includes('sugamuxi')) {
+      bg = isDark ? 'rgba(0, 230, 118, 0.1)' : 'rgba(0, 200, 83, 0.08)';
+      text = isDark ? '#00E676' : '#00C853';
+      border = isDark ? 'rgba(0, 230, 118, 0.2)' : 'rgba(0, 200, 83, 0.2)';
+    }
+
+    return {
+      'background-color': bg,
+      'color': text,
+      'border': `1px solid ${border}`
+    };
+  }
+
+  isDark(): boolean {
+    return document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  }
+
   cerrarDetalle(): void {
     this.mostrarDetalleRuta = false;
-    this.rutaCalculada = null;
-    this.mensajeError = '';
+    this.guardarEstado();
+    this.cdr.detectChanges();
+  }
+
+  centrarEnOrigen(): void {
+    if (this.rutaCalculada && this.rutaCalculada.camino && this.rutaCalculada.camino.length > 0) {
+      const validCoords = this.rutaCalculada.camino
+        .filter(t => t.latitud !== 0.0 && t.longitud !== 0.0)
+        .map(t => L.latLng(t.latitud, t.longitud));
+      
+      if (validCoords.length > 0) {
+        const bounds = L.latLngBounds(validCoords);
+        this.map.fitBounds(bounds, {
+          padding: [50, 50],
+          animate: true,
+          duration: 1.0
+        });
+        return;
+      }
+    }
+
+    const origenId = this.buscarForm.get('origen')?.value;
+    if (origenId) {
+      const origenBarrio = this.barrios.find(b => b.id === Number(origenId));
+      if (origenBarrio && origenBarrio.latitud && origenBarrio.longitud) {
+        this.map.setView([origenBarrio.latitud, origenBarrio.longitud], 16, {
+          animate: true,
+          duration: 1.0
+        });
+        return;
+      }
+    }
+
+    // Default Fallback
+    this.map.setView([5.715, -72.933], 14, {
+      animate: true,
+      duration: 1.0
+    });
+  }
+
+  zoomIn(): void {
+    if (this.map) {
+      this.map.zoomIn();
+    }
+  }
+
+  zoomOut(): void {
+    if (this.map) {
+      this.map.zoomOut();
+    }
+  }
+
+  private touchStartY = 0;
+
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(event: TouchEvent): void {
+    if (window.innerWidth < 768) {
+      this.touchStartY = event.touches[0].clientY;
+    }
+  }
+
+  @HostListener('touchend', ['$event'])
+  onTouchEnd(event: TouchEvent): void {
+    if (window.innerWidth < 768 && this.rutaCalculada && !this.mostrarDetalleRuta) {
+      const touchEndY = event.changedTouches[0].clientY;
+      const diffY = this.touchStartY - touchEndY;
+      if (diffY > 50) { // Deslizar hacia arriba al menos 50px
+        this.mostrarDetalleRuta = true;
+        this.guardarEstado();
+        this.cdr.detectChanges();
+      }
+    }
   }
 }

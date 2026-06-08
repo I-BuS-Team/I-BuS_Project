@@ -6,7 +6,8 @@ from app.domain.models import TramoRuta, RutaCalcularResponse
 
 def calcular_ruta_optima(db: Session, origen_id: int, destino_id: int) -> RutaCalcularResponse:
     # Cargar de barrios
-    barrios = {b.idBarrio: b.nombreBarrio for b in db.query(BarrioDB).all()}
+    barrios_db = db.query(BarrioDB).all()
+    barrios = {b.idBarrio: b for b in barrios_db}
     
     if origen_id not in barrios or destino_id not in barrios:
         return None
@@ -20,23 +21,32 @@ def calcular_ruta_optima(db: Session, origen_id: int, destino_id: int) -> RutaCa
     }
 
     # Modelar el Grafo
-    # Conectamor barrios que comparten una misma ruta de transporte
+    # Conectamos barrios secuencialmente según su orden físico en la ruta
     grafo = defaultdict(list)
+    # Cargar todos los RutaBarrio en una sola consulta para evitar N+1 queries
+    rutas_barrios_db = db.query(RutaBarrioDB).order_by(RutaBarrioDB.orden.asc()).all()
+    rutas_barrios_map = defaultdict(list)
+    for rb in rutas_barrios_db:
+        rutas_barrios_map[rb.idRuta].append(rb)
+
     for ruta in rutas_db:
-        barrios_ruta = db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == ruta.idRuta).all()
+        barrios_ruta = rutas_barrios_map[ruta.idRuta]
         barrio_ids = [br.idBarrio for br in barrios_ruta]
         
-        if ruta.inicioRuta_id not in barrio_ids:
-            barrio_ids.append(ruta.inicioRuta_id)
-        if ruta.destinoRuta_id not in barrio_ids:
-            barrio_ids.append(ruta.destinoRuta_id)
+        sequence = []
+        if ruta.inicioRuta_id is not None:
+            sequence.append(ruta.inicioRuta_id)
+        for b_id in barrio_ids:
+            if b_id not in sequence:
+                sequence.append(b_id)
+        if ruta.destinoRuta_id is not None and ruta.destinoRuta_id not in sequence:
+            sequence.append(ruta.destinoRuta_id)
             
-        for i in range(len(barrio_ids)):
-            for j in range(i + 1, len(barrio_ids)):
-                u = barrio_ids[i]
-                v = barrio_ids[j]
-                grafo[u].append({"destino": v, "peso": 1, "ruta_id": ruta.idRuta})
-                grafo[v].append({"destino": u, "peso": 1, "ruta_id": ruta.idRuta})
+        for i in range(len(sequence) - 1):
+            u = sequence[i]
+            v = sequence[i + 1]
+            grafo[u].append({"destino": v, "peso": 1, "ruta_id": ruta.idRuta})
+            grafo[v].append({"destino": u, "peso": 1, "ruta_id": ruta.idRuta})
 
     # Algoritmo de Dijkstra
     distancias = {origen_id: (0, None, None)}
@@ -72,11 +82,18 @@ def calcular_ruta_optima(db: Session, origen_id: int, destino_id: int) -> RutaCa
     nodo = destino_id
     while nodo is not None:
         dist, anterior, ruta_id = distancias[nodo]
+        barrio_obj = barrios.get(nodo)
+        barrio_nombre = barrio_obj.nombreBarrio if barrio_obj else f"Barrio {nodo}"
+        barrio_lat = barrio_obj.latitud if (barrio_obj and barrio_obj.latitud is not None) else 0.0
+        barrio_lon = barrio_obj.longitud if (barrio_obj and barrio_obj.longitud is not None) else 0.0
+        
         camino.append(TramoRuta(
             barrio_id=nodo,
-            nombre_barrio=barrios.get(nodo, f"Barrio {nodo}"),
+            nombre_barrio=barrio_nombre,
             ruta_id=ruta_id,
-            nombre_ruta=rutas_nombres.get(ruta_id) if ruta_id else None
+            nombre_ruta=rutas_nombres.get(ruta_id) if ruta_id else None,
+            latitud=barrio_lat,
+            longitud=barrio_lon
         ))
         nodo = anterior
 

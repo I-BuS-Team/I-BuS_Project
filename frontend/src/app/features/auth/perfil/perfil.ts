@@ -14,6 +14,45 @@ export class PerfilComponent implements OnInit {
   nombreUsuario = 'Usuario';
   emailUsuario = '';
 
+  idioma = 'es';
+  
+  translations: { [key: string]: { [key: string]: string } } = {
+    es: {
+      perfil: 'Perfil',
+      misFavoritos: 'Mis Favoritos',
+      historialBusqueda: 'Historial de Búsqueda',
+      cerrarSesion: 'Cerrar Sesión',
+      eliminarCuenta: 'Eliminar Cuenta',
+      confirmarEliminarTitulo: '¿Eliminar Cuenta?',
+      confirmarEliminarDesc: '¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.',
+      cancelar: 'Cancelar',
+      siEliminar: 'Sí, eliminar',
+      solicitudRecibida: 'Solicitud Recibida',
+      entendido: 'Entendido',
+      mapa: 'Mapa',
+      ajustes: 'Ajustes'
+    },
+    en: {
+      perfil: 'Profile',
+      misFavoritos: 'My Favorites',
+      historialBusqueda: 'Search History',
+      cerrarSesion: 'Log Out',
+      eliminarCuenta: 'Delete Account',
+      confirmarEliminarTitulo: 'Delete Account?',
+      confirmarEliminarDesc: 'Are you sure you want to delete your account? This action cannot be undone.',
+      cancelar: 'Cancel',
+      siEliminar: 'Yes, delete',
+      solicitudRecibida: 'Request Received',
+      entendido: 'Understood',
+      mapa: 'Map',
+      ajustes: 'Settings'
+    }
+  };
+
+  t(key: string): string {
+    return this.translations[this.idioma]?.[key] || key;
+  }
+
   favoritos = [
     { tipo: 'casa', nombre: 'Casa', direccion: 'Calle 10 # 5-20' },
     { tipo: 'trabajo', nombre: 'Trabajo', direccion: 'Avenida El Dorado # 60-15' },
@@ -38,6 +77,7 @@ export class PerfilComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.idioma = localStorage.getItem('idioma') || 'es';
     this.cargarDatosUsuario();
   }
 

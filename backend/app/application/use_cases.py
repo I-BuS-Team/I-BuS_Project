@@ -14,8 +14,20 @@ from app.infrastructure.models import BarrioDB, EmpresaDB, RutaDB, HorarioDB, Ti
 def listar_barrios(db: Session):
     repo = BarrioRepository(db)
     barrios_db = repo.get_all()
+    
+    inicio_ids = {r.inicioRuta_id for r in db.query(RutaDB).filter(RutaDB.inicioRuta_id != None).all()}
+    destino_ids = {r.destinoRuta_id for r in db.query(RutaDB).filter(RutaDB.destinoRuta_id != None).all()}
+    rutabarrio_ids = {rb.idBarrio for rb in db.query(RutaBarrioDB).all()}
+    used_ids = inicio_ids.union(destino_ids).union(rutabarrio_ids)
+    
     return [
-        DomainBarrio(id=b.idBarrio, nombre=b.nombreBarrio)
+        DomainBarrio(
+            id=b.idBarrio,
+            nombre=b.nombreBarrio,
+            latitud=b.latitud,
+            longitud=b.longitud,
+            usado=(b.idBarrio in used_ids)
+        )
         for b in barrios_db
     ]
 
@@ -41,7 +53,7 @@ def listar_rutas(db: Session):
     rutas_db = repo.get_all()
     res = []
     for r in rutas_db:
-        barrios_db = db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == r.idRuta).all()
+        barrios_db = db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == r.idRuta).order_by(RutaBarrioDB.orden.asc()).all()
         barrio_ids = [b.idBarrio for b in barrios_db]
         res.append(
             DomainRuta(
@@ -65,10 +77,10 @@ def crear_ruta(db: Session, ruta_in: DomainRuta):
     )
     creada = repo.create(nueva_ruta)
     
-    # Guardar barrios asociados
+    # Guardar barrios asociados con su orden secuencial
     if ruta_in.barrio_ids:
-        for b_id in ruta_in.barrio_ids:
-            rb_db = RutaBarrioDB(idRuta=creada.idRuta, idBarrio=b_id)
+        for idx, b_id in enumerate(ruta_in.barrio_ids):
+            rb_db = RutaBarrioDB(idRuta=creada.idRuta, idBarrio=b_id, orden=idx + 1)
             db.add(rb_db)
         db.commit()
         
@@ -93,11 +105,11 @@ def actualizar_ruta(db: Session, id_ruta: int, ruta_update: DomainRuta):
     
     actualizada = repo.update(ruta_db)
     
-    # Actualizar barrios asociados
+    # Actualizar barrios asociados restableciendo el orden secuencial
     db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == id_ruta).delete()
     if ruta_update.barrio_ids:
-        for b_id in ruta_update.barrio_ids:
-            rb_db = RutaBarrioDB(idRuta=id_ruta, idBarrio=b_id)
+        for idx, b_id in enumerate(ruta_update.barrio_ids):
+            rb_db = RutaBarrioDB(idRuta=id_ruta, idBarrio=b_id, orden=idx + 1)
             db.add(rb_db)
     db.commit()
     
@@ -115,9 +127,10 @@ def eliminar_ruta(db: Session, id_ruta: int) -> bool:
     ruta_db = repo.get_by_id(id_ruta)
     if not ruta_db:
         return False
-    # Eliminar registros dependientes
+    # Eliminar registros dependientes (incluyendo horarios asociados a la ruta)
     db.query(DetalleRutaDB).filter(DetalleRutaDB.idRuta == id_ruta).delete()
     db.query(RutaBarrioDB).filter(RutaBarrioDB.idRuta == id_ruta).delete()
+    db.query(HorarioDB).filter(HorarioDB.idRuta == id_ruta).delete()
     db.delete(ruta_db)
     db.commit()
     return True
@@ -127,31 +140,31 @@ def listar_horarios(db: Session):
     repo = HorarioRepository(db)
     horarios_db = repo.get_all()
     return [
-        DomainHorario(id=h.idHorario, idEmpresa=h.idEmpresa, horaSalida=str(h.horaSalida), horaLlegada=str(h.horaLlegada))
+        DomainHorario(id=h.idHorario, idRuta=h.idRuta, horaSalida=str(h.horaSalida), horaLlegada=str(h.horaLlegada))
         for h in horarios_db
     ]
 
 def crear_horario(db: Session, horario_in: DomainHorario):
     repo = HorarioRepository(db)
     nuevo_horario = HorarioDB(
-        idEmpresa=horario_in.idEmpresa,
+        idRuta=horario_in.idRuta,
         horaSalida=horario_in.horaSalida,
         horaLlegada=horario_in.horaLlegada
     )
     creado = repo.create(nuevo_horario)
-    return DomainHorario(id=creado.idHorario, idEmpresa=creado.idEmpresa, horaSalida=str(creado.horaSalida), horaLlegada=str(creado.horaLlegada))
+    return DomainHorario(id=creado.idHorario, idRuta=creado.idRuta, horaSalida=str(creado.horaSalida), horaLlegada=str(creado.horaLlegada))
 
 def actualizar_horario(db: Session, id_horario: int, horario_update: DomainHorario):
     repo = HorarioRepository(db)
     horario_db = repo.get_by_id(id_horario)
     if not horario_db:
         return None
-    horario_db.idEmpresa = horario_update.idEmpresa
+    horario_db.idRuta = horario_update.idRuta
     horario_db.horaSalida = horario_update.horaSalida
     horario_db.horaLlegada = horario_update.horaLlegada
     
     actualizado = repo.update(horario_db)
-    return DomainHorario(id=actualizado.idHorario, idEmpresa=actualizado.idEmpresa, horaSalida=str(actualizado.horaSalida), horaLlegada=str(actualizado.horaLlegada))
+    return DomainHorario(id=actualizado.idHorario, idRuta=actualizado.idRuta, horaSalida=str(actualizado.horaSalida), horaLlegada=str(actualizado.horaLlegada))
 
 def eliminar_horario(db: Session, id_horario: int) -> bool:
     repo = HorarioRepository(db)
@@ -355,15 +368,6 @@ def eliminar_empresa(db: Session, id_empresa: int) -> bool:
         raise HTTPException(
             status_code=400,
             detail="No se puede eliminar la empresa porque tiene rutas asignadas."
-        )
-        
-    # Verificar si la empresa tiene horarios asociados
-    horarios_con_empresa = db.query(HorarioDB).filter(HorarioDB.idEmpresa == id_empresa).first()
-    if horarios_con_empresa:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="No se puede eliminar la empresa porque tiene horarios registrados."
         )
         
     db.delete(empresa_db)

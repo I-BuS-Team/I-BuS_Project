@@ -32,6 +32,9 @@ class Empresa(BaseModel):
 class Barrio(BaseModel):
     id: Optional[int] = None
     nombre: str
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
+    usado: Optional[bool] = None
     
     class Config:
         from_attributes = True
@@ -49,7 +52,7 @@ class Ruta(BaseModel):
 
 class Horario(BaseModel):
     id: Optional[int]
-    idEmpresa: int
+    idRuta: Optional[int] = None
     horaSalida: str
     horaLlegada: str
     
@@ -76,6 +79,7 @@ class RutaBarrio(BaseModel):
     id: Optional[int]
     idRuta: int
     idBarrio: int
+    orden: int
     
     class Config:
         from_attributes = True
@@ -88,6 +92,8 @@ class TramoRuta(BaseModel):
     nombre_barrio: str
     ruta_id: Optional[int] = None
     nombre_ruta: Optional[str] = None
+    latitud: float
+    longitud: float
 class RutaCalcularResponse(BaseModel):
     total_tramos: int
     camino: List[TramoRuta]

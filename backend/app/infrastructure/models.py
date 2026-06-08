@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Time, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Time, Date, Float
 from app.infrastructure.database import Base
 
 class TipoUsuarioDB(Base):
@@ -27,6 +27,8 @@ class BarrioDB(Base):
     __tablename__ = 'Barrio'
     idBarrio = Column(Integer, primary_key=True, index=True)
     nombreBarrio = Column(String(100))
+    latitud = Column(Float, nullable=True)
+    longitud = Column(Float, nullable=True)
 
 class RutaDB(Base):
     __tablename__ = 'Ruta'
@@ -39,7 +41,7 @@ class RutaDB(Base):
 class HorarioDB(Base):
     __tablename__ = 'Horario'
     idHorario = Column(Integer, primary_key=True, index=True)
-    idEmpresa = Column('idEmpresa_id', Integer, ForeignKey('Empresa.idEmpresa'))
+    idRuta = Column('idRuta_id', Integer, ForeignKey('Ruta.idRuta'))
     horaSalida = Column(Time)
     horaLlegada = Column(Time)
 
@@ -60,3 +62,4 @@ class RutaBarrioDB(Base):
     idRutaBarrio = Column(Integer, primary_key=True, index=True)
     idRuta = Column('idRuta_id', Integer, ForeignKey('Ruta.idRuta'))
     idBarrio = Column('idBarrio_id', Integer, ForeignKey('Barrio.idBarrio'))
+    orden = Column(Integer, nullable=False, default=1)

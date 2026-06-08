@@ -45,7 +45,7 @@
         <div class="flex items-center gap-3 w-full mb-2 relative">
           <!-- Search input -->
           <div class="flex-1 flex items-center border border-white/40 rounded-lg h-[46px] px-3 bg-transparent">
-            <input formControlName="buscar" type="text" placeholder="Buscar Horario por Empresa/Hora..."
+            <input formControlName="buscar" type="text" placeholder="Buscar Horario por Ruta/Hora..."
               (input)="onSearchInput()" (focus)="onSearchInput()" (click)="$event.stopPropagation(); onSearchInput()"
               class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none placeholder-white/40 pr-2">
             <div class="text-white/60 cursor-pointer">
@@ -60,10 +60,10 @@
           </button>
 
           <!-- Search results dropdown overlay -->
-          <div *ngIf="showSearchResults && searchResults.length > 0" class="absolute left-0 top-[52px] w-full max-h-[200px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
+          <div *ngIf="showSearchResults && searchResults.length > 0" (click)="$event.stopPropagation()" class="absolute left-0 top-[52px] w-full max-h-[200px] overflow-y-auto bg-ibus-blue border border-white/20 rounded-lg shadow-xl z-50">
             <div *ngFor="let h of searchResults" (click)="selectHorario(h)" class="px-4 py-3 hover:bg-white/10 cursor-pointer border-b border-white/10 flex flex-col gap-1 transition-colors">
               <span class="font-roboto font-bold text-[13px] text-ibus-yellow text-left">Horario ID: {{ h.id }}</span>
-              <span class="text-[12px] text-white/90 text-left">Empresa: {{ getEmpresaName(h.idEmpresa) }}</span>
+              <span class="text-[12px] text-white/90 text-left">Ruta: {{ getRutaDetails(h.idRuta) }}</span>
               <span class="text-[11px] text-white/60 text-left">Salida: {{ h.horaSalida.substring(0, 5) }} | Llegada: {{ h.horaLlegada.substring(0, 5) }}</span>
             </div>
           </div>
@@ -79,19 +79,19 @@
           </label>
           <div class="flex items-center border border-white/20 rounded-lg h-[50px] relative z-0 bg-white/5">
             <input formControlName="idHorario" type="text"
-              class="w-full bg-transparent text-white/60 font-roboto text-[14px] focus:outline-none px-4">
+               class="w-full bg-transparent text-white/60 font-roboto text-[14px] focus:outline-none px-4">
           </div>
         </div>
 
-        <!-- Empresa Select -->
+        <!-- Ruta Select -->
         <div class="relative w-full">
           <label class="absolute -top-[10px] left-3 bg-ibus-blue px-2 font-roboto font-bold text-[11px] text-white/80 tracking-[0.4px] z-10">
-            Empresa
+            Ruta
           </label>
           <div class="flex items-center border border-white/40 rounded-lg h-[50px] relative z-0 px-4">
-            <select formControlName="idEmpresa" class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none appearance-none cursor-pointer pr-8">
-              <option value="" class="bg-ibus-blue text-white">Seleccione Empresa</option>
-              <option *ngFor="let e of allEmpresas" [value]="e.id" class="bg-ibus-blue text-white">{{ e.nombreEmpresa }}</option>
+            <select formControlName="idRuta" class="w-full bg-transparent text-white font-roboto text-[14px] focus:outline-none appearance-none cursor-pointer pr-8" style="color-scheme: dark;">
+              <option value="" class="bg-ibus-blue text-white">Seleccione Ruta</option>
+              <option *ngFor="let r of allRutas" [value]="r.id" class="bg-ibus-blue text-white">Ruta {{ r.id }} (Frecuencia: {{ r.frecuencia }})</option>
             </select>
             <div class="absolute right-4 pointer-events-none text-white/60">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

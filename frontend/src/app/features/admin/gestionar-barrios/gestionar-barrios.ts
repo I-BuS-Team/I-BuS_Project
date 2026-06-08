@@ -37,6 +37,26 @@ export class GestionarBarrios implements OnInit {
     });
 
     this.cargarDatos();
+
+    // Auto-seleccionar si el texto ingresado en buscar coincide exactamente con un barrio existente
+    this.barrioForm.get('buscar')?.valueChanges.subscribe(val => {
+      if (val) {
+        const matched = this.allBarrios.find(b => b.nombre.toLowerCase().trim() === val.toLowerCase().trim());
+        if (matched && this.selectedBarrioId !== matched.id) {
+          this.selectBarrio(matched);
+        }
+      }
+    });
+
+    // Auto-seleccionar si se digita el nombre exacto de un barrio existente en el campo de Nombre Barrio
+    this.barrioForm.get('nombreBarrio')?.valueChanges.subscribe(val => {
+      if (val) {
+        const matched = this.allBarrios.find(b => b.nombre.toLowerCase().trim() === val.toLowerCase().trim());
+        if (matched && this.selectedBarrioId !== matched.id) {
+          this.selectBarrio(matched);
+        }
+      }
+    });
   }
 
   @HostListener('document:click', ['$event'])

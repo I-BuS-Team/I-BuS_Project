@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { from, Observable, map, timeout, catchError, of, throwError, defer } from 'rxjs';
 import { SUPABASE_CONFIG } from './supabase-config';
+import { BarriosService } from '../usuario/buscar-rutas/services/barrios.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class AuthService {
   private modoOffline = false;
   private userSimulado: any = null;
 
-  constructor() {
+  constructor(private barriosService: BarriosService) {
     this.supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
   }
 
@@ -20,6 +21,7 @@ export class AuthService {
   }
 
   login(credentials: any): Observable<any> {
+    this.barriosService.limpiarEstadoBusqueda();
     return defer(() =>
       from(
         this.supabase.auth.signInWithPassword({
@@ -148,6 +150,7 @@ export class AuthService {
   }
 
   logout(): Observable<any> {
+    this.barriosService.limpiarEstadoBusqueda();
     if (this.modoOffline) {
       this.userSimulado = null;
       this.modoOffline = false;
@@ -214,6 +217,7 @@ export class AuthService {
   }
 
   deleteAccount(): Observable<any> {
+    this.barriosService.limpiarEstadoBusqueda();
     this.userSimulado = null;
     this.modoOffline = false;
     return defer(() => from(this.supabase.auth.signOut())).pipe(

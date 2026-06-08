@@ -1,0 +1,73 @@
+/* Leaflet Map Premium Styles */
+
+/* Hide ugly default routing directions panel */
+::ng-deep .leaflet-routing-container {
+  display: none !important;
+}
+
+/* Beautiful dark blue map popups matching I-BuS color system */
+::ng-deep .leaflet-popup-content-wrapper {
+  background: #0A2C51 !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-family: 'Roboto', sans-serif !important;
+  padding: 6px 12px !important;
+}
+
+::ng-deep .leaflet-popup-tip {
+  background: #0A2C51 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+::ng-deep .leaflet-popup-content {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  margin: 8px 10px !important;
+}
+
+::ng-deep .leaflet-popup-close-button {
+  color: rgba(255, 255, 255, 0.6) !important;
+  padding: 6px 8px 0 0 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+::ng-deep .leaflet-popup-close-button:hover {
+  color: #F9B233 !important;
+  background: transparent !important;
+}
+
+/* Modern zoom controls style */
+::ng-deep .leaflet-bar {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .leaflet-bar a {
+  background-color: #ffffff !important;
+  color: #0A2C51 !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.2s ease !important;
+  font-weight: bold !important;
+}
+
+::ng-deep .leaflet-bar a:hover {
+  background-color: #f3f4f6 !important;
+  color: #F9B233 !important;
+}
+
+::ng-deep .leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+
+/* Map tiles contrast boost for modern aesthetic */
+#map {
+  filter: saturate(1.05) contrast(1.02);
+  transition: all 0.3s ease;
+}
