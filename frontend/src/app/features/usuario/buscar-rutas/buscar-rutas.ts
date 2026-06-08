@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BarriosService, Barrio, RutaCalcularResponse, TramoRuta } from './services/barrios.service';
 import * as L from 'leaflet';
-import * as LRM from 'leaflet-routing-machine';
 
 const MOCK_BARRIOS: Barrio[] = [
   { id: 6, nombre: 'Centro', latitud: 5.715, longitud: -72.933 },
@@ -369,25 +368,21 @@ export class BuscarRutas implements OnInit, AfterViewInit {
   }
 
   trazarRutaReal(camino: TramoRuta[]): void {
+    // Limpiar control/capa anterior
     if (this.routingControl) {
       try {
         if (typeof this.routingControl.remove === 'function') {
           this.routingControl.remove();
-        } else if (typeof (this.routingControl as any).removeFrom === 'function') {
-          (this.routingControl as any).removeFrom(this.map);
         } else {
-          this.map.removeControl(this.routingControl);
+          this.map.removeLayer(this.routingControl as any);
         }
-      } catch (e) {
-        try { this.map.removeLayer(this.routingControl as any); } catch (_) {}
-      }
+      } catch (_) {}
       this.routingControl = null;
     }
 
     // Filtrar tramos con coordenadas válidas
-    const waypoints = camino
-      .filter(t => t.latitud !== 0.0 && t.longitud !== 0.0)
-      .map(t => L.latLng(t.latitud, t.longitud));
+    const waypointTramos = camino.filter(t => t.latitud !== 0.0 && t.longitud !== 0.0);
+    const waypoints = waypointTramos.map(t => L.latLng(t.latitud, t.longitud));
 
     if (waypoints.length < 2) {
       console.warn('No hay suficientes coordenadas válidas para trazar la ruta en el mapa.');
@@ -396,102 +391,120 @@ export class BuscarRutas implements OnInit, AfterViewInit {
 
     const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
 
-    // Verificar que leaflet-routing-machine esté disponible
-    const Routing = (L as any).Routing || (LRM as any)?.Routing || (LRM as any);
-    if (!Routing || typeof Routing.control !== 'function') {
-      console.warn('leaflet-routing-machine no disponible. Dibujando ruta como polilínea simple.');
-      const style = this.getRouteStyle(null, isDark);
-      const polylineGroup = L.featureGroup([
-        L.polyline(waypoints, style.outer),
-        L.polyline(waypoints, style.inner)
-      ]);
-      polylineGroup.addTo(this.map);
-      this.routingControl = polylineGroup as any;
-      this.map.fitBounds(L.latLngBounds(waypoints), { padding: [50, 50] });
-      return;
-    }
+    // Coordenadas en formato OSRM: lng,lat;lng,lat
+    const coordStr = waypointTramos
+      .map(t => `${t.longitud},${t.latitud}`)
+      .join(';');
 
-    // Crear el control de ruteo usando el enrutador OSRM oficial público de OpenStreetMap
-    this.routingControl = Routing.control({
-      waypoints: waypoints,
-      router: Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1'
-      }),
-      routeLine: (route: any, options: any) => {
-        const features: L.Layer[] = [];
-        const waypointIndices = route.waypointIndices;
-        const coordinates = route.coordinates;
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson&steps=false`;
 
-        if (!waypointIndices || waypointIndices.length < 2) {
-          const style = this.getRouteStyle(null, isDark);
-          features.push(L.polyline(coordinates, style.outer));
-          features.push(L.polyline(coordinates, style.inner));
-          return L.featureGroup(features);
-        }
+    // Marcadores de origen/destino (inmediatos, sin esperar la ruta)
+    const markers: L.Layer[] = [];
+    waypointTramos.forEach((tramo, i) => {
+      const isStart = i === 0;
+      const isEnd = i === waypointTramos.length - 1;
+      const isMiddle = !isStart && !isEnd;
 
-        for (let i = 0; i < waypointIndices.length - 1; i++) {
-          const startIndex = waypointIndices[i];
-          const endIndex = waypointIndices[i + 1];
-          const legCoords = coordinates.slice(startIndex, endIndex + 1);
+      const iconHtml = isStart
+        ? `<div style="background-color:#F9B233;color:#0A2C51;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2.5px solid white;box-shadow:0 3px 6px rgba(0,0,0,0.3);font-family:sans-serif">O</div>`
+        : isEnd
+        ? `<div style="background-color:#EF4444;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2.5px solid white;box-shadow:0 3px 6px rgba(0,0,0,0.3);font-family:sans-serif">D</div>`
+        : `<div style="background-color:#175AA5;color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;border:1.5px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.25);font-family:sans-serif">${i}</div>`;
 
-          // Get the route taken for this leg from the camino array
-          // leg i is from waypoint i to waypoint i+1
-          // in camino array, the route info is at camino[i + 1]
-          const tramo = camino[i + 1];
-          const nombreRuta = tramo?.nombre_ruta ?? null;
+      const label = isStart ? 'Origen' : isEnd ? 'Destino' : `Parada intermedia: ${tramo.nombre_barrio}`;
+      const size: [number, number] = isMiddle ? [22, 22] : [30, 30];
+      const anchor: [number, number] = isMiddle ? [11, 11] : [15, 15];
 
-          const style = this.getRouteStyle(nombreRuta, isDark);
-          features.push(L.polyline(legCoords, style.outer));
-          features.push(L.polyline(legCoords, style.inner));
-        }
-
-        return L.featureGroup(features);
-      },
-      show: false,
-      routeWhileDragging: false,
-      addWaypoints: false, // Desactivar edición manual de paradas
-      draggableWaypoints: false, // Evitar arrastre manual de waypoints
-      showAlternatives: false,
-      fitSelectedRoutes: true,
-      createMarker: (i: number, waypoint: any, n: number) => {
-        const isStart = i === 0;
-        const isEnd = i === n - 1;
-        
-        const iconHtml = isStart 
-          ? `<div style="background-color: #F9B233; color: #0A2C51; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">O</div>`
-          : (isEnd 
-            ? `<div style="background-color: #EF4444; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2.5px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); font-family: 'Roboto', sans-serif;">D</div>`
-            : `<div style="background-color: #175AA5; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1.5px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.25); font-family: 'Roboto', sans-serif;">${i}</div>`);
-
-        const label = isStart ? 'Origen' : (isEnd ? 'Destino' : `Parada intermedia: ${camino[i].nombre_barrio}`);
-        
-        return L.marker(waypoint.latLng, {
-          draggable: false,
-          icon: L.divIcon({
-            html: iconHtml,
-            className: '',
-            iconSize: isStart || isEnd ? [30, 30] : [22, 22],
-            iconAnchor: isStart || isEnd ? [15, 15] : [11, 11]
-          })
-        }).bindPopup(label);
-      }
+      const marker = L.marker([tramo.latitud, tramo.longitud], {
+        icon: L.divIcon({ html: iconHtml, className: '', iconSize: size, iconAnchor: anchor })
+      }).bindPopup(label);
+      markers.push(marker);
     });
 
-    if (typeof this.routingControl.on === 'function') {
-      this.routingControl.on('routesfound', (e: any) => {
-        if (e.routes && e.routes.length > 0) {
-          const totalTimeSeconds = e.routes[0].summary.totalTime;
-          const idealMinutes = totalTimeSeconds / 60;
-          const busesCount = this.obtenerCantidadBuses(camino);
-          this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
-          this.cdr.detectChanges();
-        }
-      });
-    }
+    const markerGroup = L.featureGroup(markers).addTo(this.map);
 
-    if (typeof this.routingControl.addTo === 'function') {
-      this.routingControl.addTo(this.map);
+    // Llamar a OSRM directamente sin leaflet-routing-machine
+    fetch(osrmUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.routes || data.routes.length === 0) {
+          // Fallback: línea recta entre waypoints
+          this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup);
+          return;
+        }
+
+        const route = data.routes[0];
+        const totalTimeSeconds: number = route.duration;
+        const idealMinutes = totalTimeSeconds / 60;
+        const busesCount = this.obtenerCantidadBuses(camino);
+        this.tiempoEstimado = Math.round((idealMinutes * 1.8) + (busesCount * 5));
+        this.cdr.detectChanges();
+
+        // La geometría viene como GeoJSON: coordenadas en formato [lng, lat]
+        const geoCoords: [number, number][] = route.geometry.coordinates;
+        const latLngs: L.LatLng[] = geoCoords.map(([lng, lat]) => L.latLng(lat, lng));
+
+        // Calcular los índices de la geometría más cercanos a cada waypoint
+        // para poder dividir la línea por segmento/empresa
+        const segmentIndices: number[] = waypointTramos.map(tramo => {
+          let minDist = Infinity;
+          let minIdx = 0;
+          latLngs.forEach((ll, idx) => {
+            const d = ll.distanceTo(L.latLng(tramo.latitud, tramo.longitud));
+            if (d < minDist) { minDist = d; minIdx = idx; }
+          });
+          return minIdx;
+        });
+
+        // Dibujar cada segmento con el color de su empresa
+        const layers: L.Layer[] = [];
+        for (let seg = 0; seg < segmentIndices.length - 1; seg++) {
+          const startIdx = segmentIndices[seg];
+          const endIdx = segmentIndices[seg + 1];
+          const segCoords = latLngs.slice(startIdx, endIdx + 1);
+          if (segCoords.length < 2) continue;
+
+          // camino[seg + 1] contiene la ruta de ese tramo
+          const nombreRuta = waypointTramos[seg + 1]?.nombre_ruta ?? null;
+          const style = this.getRouteStyle(nombreRuta, isDark);
+          layers.push(L.polyline(segCoords, style.outer));
+          layers.push(L.polyline(segCoords, style.inner));
+        }
+
+        const routeGroup = L.featureGroup([...layers, ...markers]).addTo(this.map);
+        // Quitar el grupo de marcadores previo y reemplazar
+        markerGroup.remove();
+        this.routingControl = routeGroup as any;
+        this.map.fitBounds(routeGroup.getBounds(), { padding: [50, 50], animate: true });
+      })
+      .catch(() => {
+        // Si OSRM falla (sin internet, error), dibujamos líneas rectas de fallback
+        this.dibujarPolilineasSimples(waypoints, camino, isDark, markerGroup);
+      });
+
+    // Guardar el grupo de marcadores como control temporal hasta que llegue la respuesta
+    this.routingControl = markerGroup as any;
+  }
+
+  dibujarPolilineasSimples(
+    waypoints: L.LatLng[],
+    camino: TramoRuta[],
+    isDark: boolean,
+    markerGroup?: L.FeatureGroup
+  ): void {
+    const layers: L.Layer[] = [];
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      const nombreRuta = camino[i + 1]?.nombre_ruta ?? null;
+      const style = this.getRouteStyle(nombreRuta, isDark);
+      layers.push(L.polyline([waypoints[i], waypoints[i + 1]], style.outer));
+      layers.push(L.polyline([waypoints[i], waypoints[i + 1]], style.inner));
     }
+    if (markerGroup) {
+      markerGroup.remove();
+    }
+    const group = L.featureGroup(layers).addTo(this.map);
+    this.routingControl = group as any;
+    this.map.fitBounds(L.latLngBounds(waypoints), { padding: [50, 50] });
   }
 
   getRouteStyle(nombreRuta: string | null, isDark: boolean): { outer: any, inner: any } {
