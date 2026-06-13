@@ -1,0 +1,89 @@
+{
+  "endpoints_publicos_get": [
+  {
+    "nombre": "listar_barrios",
+    "path": "/api/barrios",
+    "min_items": 4
+  },
+  {
+    "nombre": "listar_empresas",
+    "path": "/api/empresas",
+    "min_items": 1
+  },
+  {
+    "nombre": "listar_rutas",
+    "path": "/api/rutas",
+    "min_items": 2
+  },
+  {
+    "nombre": "listar_horarios",
+    "path": "/api/horarios",
+    "min_items": 1
+  },
+  {
+    "nombre": "listar_tiempos",
+    "path": "/api/tiempos",
+    "min_items": 1
+  },
+  {
+    "nombre": "listar_detalles",
+    "path": "/api/detalles",
+    "min_items": 0
+  }
+  ],
+  "casos_calcular_ruta": [
+  {
+    "nombre": "centro_a_uptc_conectados",
+    "origen_key": "centro_id",
+    "destino_key": "uptc_id",
+    "status": 200,
+    "min_tramos": 2,
+    "primer_barrio": "Centro",
+    "ultimo_barrio": "UPTC"
+  },
+  {
+    "nombre": "origen_igual_destino_existe",
+    "origen_key": "centro_id",
+    "destino_key": "centro_id",
+    "status": 200,
+    "min_tramos": 0,
+    "primer_barrio": "Centro",
+    "ultimo_barrio": "Centro"
+  },
+  {
+    "nombre": "barrio_aislado_sin_conexion",
+    "origen_key": "centro_id",
+    "destino_key": "aislado_id",
+    "status": 404
+  },
+  {
+    "nombre": "ids_inexistentes",
+    "origen_id": 9999,
+    "destino_id": 8888,
+    "status": 404
+  }
+  ],
+  "casos_crud_barrio": [
+  {
+    "nombre": "crear_barrio_valido",
+    "method": "POST",
+    "path": "/api/barrios",
+    "body": {"nombre": "Nuevo Barrio Test"},
+    "expected_status": 200,
+    "response_fields": ["id", "nombre"]
+  },
+  {
+    "nombre": "actualizar_barrio_inexistente",
+    "method": "PUT",
+    "path": "/api/barrios/99999",
+    "body": {"nombre": "Fantasma"},
+    "expected_status": 404
+  },
+  {
+    "nombre": "eliminar_barrio_inexistente",
+    "method": "DELETE",
+    "path": "/api/barrios/99999",
+    "expected_status": 404
+  }
+  ]
+}
